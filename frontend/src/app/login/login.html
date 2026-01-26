@@ -1,0 +1,99 @@
+<div class="login-container">
+    <div class="card">
+        <div class="header">
+            <h2>
+                <ng-container [ngSwitch]="mode">
+                    <span *ngSwitchCase="'LOGIN'">Welcome Back</span>
+                    <span *ngSwitchCase="'SIGNUP'">Create Account</span>
+                    <span *ngSwitchCase="'FORGOT'">Reset Password</span>
+                </ng-container>
+            </h2>
+            <p class="subtitle">
+                <ng-container [ngSwitch]="mode">
+                    <span *ngSwitchCase="'LOGIN'">Sign in to access your dashboard</span>
+                    <span *ngSwitchCase="'SIGNUP'">Join us to manage your books</span>
+                    <span *ngSwitchCase="'FORGOT'">Enter your email to receive a code</span>
+                </ng-container>
+            </p>
+        </div>
+
+        <!-- CREDENTIALS STEP -->
+        <div *ngIf="step === 'CREDENTIALS'" class="animate-fade-in">
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" [(ngModel)]="email" placeholder="name@example.com" [disabled]="isLoading"
+                    (keyup.enter)="(!password && mode !== 'FORGOT') ? null : onSubmit()">
+            </div>
+
+            <!-- Password Field (Not for Initial Forgot Password Step) -->
+            <div class="form-group" *ngIf="mode !== 'FORGOT'">
+                <label>Password</label>
+                <input type="password" [(ngModel)]="password" placeholder="••••••••" [disabled]="isLoading"
+                    (keyup.enter)="onSubmit()">
+            </div>
+
+            <!-- Forgot Password Link -->
+            <div class="forgot-link" *ngIf="mode === 'LOGIN'">
+                <a (click)="toggleMode('FORGOT')">Forgot Password?</a>
+            </div>
+
+            <button class="primary-btn" (click)="onSubmit()"
+                [disabled]="isLoading || !email || (mode !== 'FORGOT' && !password)">
+                <ng-container [ngSwitch]="mode">
+                    <span *ngSwitchCase="'LOGIN'">{{ isLoading ? 'Signing In...' : 'Sign In' }}</span>
+                    <span *ngSwitchCase="'SIGNUP'">{{ isLoading ? 'Processing...' : 'Sign Up' }}</span>
+                    <span *ngSwitchCase="'FORGOT'">{{ isLoading ? 'Sending Code...' : 'Send Reset Code' }}</span>
+                </ng-container>
+            </button>
+
+            <div class="switch-mode">
+                <ng-container *ngIf="mode === 'LOGIN'">
+                    <p>Don't have an account? <a (click)="toggleMode('SIGNUP')">Sign Up</a></p>
+                </ng-container>
+                <ng-container *ngIf="mode === 'SIGNUP'">
+                    <p>Already have an account? <a (click)="toggleMode('LOGIN')">Log In</a></p>
+                </ng-container>
+                <ng-container *ngIf="mode === 'FORGOT'">
+                    <p><a (click)="toggleMode('LOGIN')">Back to Login</a></p>
+                </ng-container>
+            </div>
+        </div>
+
+        <!-- OTP STEP -->
+        <div *ngIf="step === 'OTP'" class="animate-fade-in">
+            <div class="otp-header">
+                <div class="icon-mail">✉️</div>
+                <h3>{{ mode === 'FORGOT' ? 'Set New Password' : 'Verify Email' }}</h3>
+                <p>We sent a code to {{ email }}</p>
+            </div>
+
+            <div class="form-group">
+                <label>Verification Code</label>
+                <input type="text" [(ngModel)]="otp" placeholder="123456" class="otp-input" maxlength="6"
+                    [disabled]="isLoading">
+            </div>
+
+            <!-- New Password Field for Reset Flow -->
+            <div class="form-group" *ngIf="mode === 'FORGOT'">
+                <label>New Password</label>
+                <input type="password" [(ngModel)]="password" placeholder="New Secure Password" [disabled]="isLoading">
+            </div>
+
+            <button class="primary-btn" (click)="onVerifyOtp()"
+                [disabled]="isLoading || !otp || (mode === 'FORGOT' && !password)">
+                {{ isLoading ? 'Verifying...' : (mode === 'FORGOT' ? 'Reset & Login' : 'Verify & Login') }}
+            </button>
+
+            <div class="otp-actions">
+                <a (click)="onResendCode()">Resend Code</a>
+                <span class="divider">•</span>
+                <a (click)="step = 'CREDENTIALS'">Back</a>
+            </div>
+        </div>
+
+        <!-- Error Banner -->
+        <div *ngIf="errorMessage" class="error-banner animate-shake">
+            {{ errorMessage }}
+        </div>
+    </div>
+</div>

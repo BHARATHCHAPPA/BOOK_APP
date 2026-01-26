@@ -1,0 +1,37 @@
+<div class="dashboard-container">
+    <header>
+        <h1>Dashboard</h1>
+        <div class="user-info">
+            <span>{{ userEmail }}</span>
+            <button (click)="onLogout()">Logout</button>
+        </div>
+    </header>
+
+    <main>
+        <div class="card status-card">
+            <h3>Backend Connection</h3>
+            <p [class.success]="backendStatus.includes('Online')" [class.error]="backendStatus.includes('Error')">
+                {{ backendStatus }}
+            </p>
+
+            <div *ngIf="apiData" class="data-preview">
+                <h4>Your Profile (from DynamoDB):</h4>
+                <pre>{{ apiData | json }}</pre>
+            </div>
+        </div>
+
+        <!-- Future sections -->
+        <div class="grid">
+            <div class="card">
+                <h3>My Children</h3>
+                <p>Manage child profiles here.</p>
+                <button class="secondary">View Children</button>
+            </div>
+            <div class="card">
+                <h3>My Books</h3>
+                <p>A library of purchased books.</p>
+                <button class="secondary">Go to Library</button>
+            </div>
+        </div>
+    </main>
+</div>
