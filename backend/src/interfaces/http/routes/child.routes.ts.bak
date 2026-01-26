@@ -1,0 +1,140 @@
+import { FastifyInstance } from 'fastify';
+import { DynamoChildRepository } from '../../infrastructure/database/DynamoChildRepository';
+import { z } from 'zod';
+
+const childRepo = new DynamoChildRepository();
+
+const createChildSchema = z.object({
+    name: z.string().min(1).max(100),
+    age: z.number().int().min(0).max(18),
+    dateOfBirth: z.string(),
+    avatar: z.string().url().optional(),
+    favoriteGenres: z.array(z.string()).optional(),
+    readingLevel: z.enum(['beginner', 'intermediate', 'advanced']).optional()
+});
+
+const updateChildSchema = createChildSchema.partial();
+
+export function childRoutes(fastify: FastifyInstance) {
+    // GET /children - List all children for current user
+    fastify.get('/children', async (req, reply) => {
+        const user = (req as any).user;
+
+        try {
+            const children = await childRepo.findByUserId(user.id);
+            return reply.send(children);
+        } catch (error: any) {
+            if (error.name === 'CredentialsProviderError') {
+                return reply.send([]); // Return empty array for dev
+            }
+            throw error;
+        }
+    });
+
+    // GET /children/:id - Get specific child
+    fastify.get('/children/:id', async (req, reply) => {
+        const user = (req as any).user;
+        const { id } = req.params as { id: string };
+
+        try {
+            const child = await childRepo.findById(id);
+
+            if (!child) {
+                return reply.status(404).send({ message: 'Child not found' });
+            }
+
+            // Verify ownership
+            if (child.userId !== user.id) {
+                return reply.status(403).send({ message: 'Access denied' });
+            }
+
+            return reply.send(child);
+        } catch (error: any) {
+            if (error.name === 'CredentialsProviderError') {
+                return reply.status(404).send({ message: 'Child not found (dev mode)' });
+            }
+            throw error;
+        }
+    });
+
+    // POST /children - Create new child
+    fastify.post('/children', async (req, reply) => {
+        const user = (req as any).user;
+
+        try {
+            const childData = createChildSchema.parse(req.body);
+            const child = await childRepo.create(user.id, childData);
+            return reply.status(201).send(child);
+        } catch (error: any) {
+            if (error.name === 'ZodError') {
+                return reply.status(400).send({ message: 'Invalid input', errors: error.errors });
+            }
+            if (error.name === 'CredentialsProviderError') {
+                // Return mock child for dev
+                return reply.status(201).send({
+                    id: 'mock-child-id',
+                    userId: user.id,
+                    ...(req.body as any),
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                    _mock: true
+                });
+            }
+            throw error;
+        }
+    });
+
+    // PUT /children/:id - Update child
+    fastify.put('/children/:id', async (req, reply) => {
+        const user = (req as any).user;
+        const { id } = req.params as { id: string };
+
+        try {
+            // Verify ownership first
+            const existing = await childRepo.findById(id);
+            if (!existing) {
+                return reply.status(404).send({ message: 'Child not found' });
+            }
+            if (existing.userId !== user.id) {
+                return reply.status(403).send({ message: 'Access denied' });
+            }
+
+            const updates = updateChildSchema.parse(req.body);
+            const updated = await childRepo.update(id, updates);
+            return reply.send(updated);
+        } catch (error: any) {
+            if (error.name === 'ZodError') {
+                return reply.status(400).send({ message: 'Invalid input', errors: error.errors });
+            }
+            if (error.name === 'CredentialsProviderError') {
+                return reply.send({ id, ...req.body, _mock: true });
+            }
+            throw error;
+        }
+    });
+
+    // DELETE /children/:id - Delete child
+    fastify.delete('/children/:id', async (req, reply) => {
+        const user = (req as any).user;
+        const { id } = req.params as { id: string };
+
+        try {
+            // Verify ownership first
+            const existing = await childRepo.findById(id);
+            if (!existing) {
+                return reply.status(404).send({ message: 'Child not found' });
+            }
+            if (existing.userId !== user.id) {
+                return reply.status(403).send({ message: 'Access denied' });
+            }
+
+            await childRepo.delete(id);
+            return reply.status(204).send();
+        } catch (error: any) {
+            if (error.name === 'CredentialsProviderError') {
+                return reply.status(204).send();
+            }
+            throw error;
+        }
+    });
+}
