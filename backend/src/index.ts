@@ -19,20 +19,13 @@ const auditRepo = new DynamoAuditRepository();
 const adminService = new AdminService(auditRepo);
 
 // Register Routes
-// import { childRoutes } from './interfaces/http/routes/child.routes';
-// import { bookRoutes } from './interfaces/http/routes/book.routes';
+import { childRoutes } from './interfaces/http/routes/child.routes';
+import { bookRoutes } from './interfaces/http/routes/book.routes';
 import { userRoutes } from './interfaces/http/routes/user.routes';
-// import { creditRoutes } from './interfaces/http/routes/credit.routes';
 
-// Apply auth middleware to all routes except health
-server.register(async (protectedServer) => {
-    protectedServer.addHook('preHandler', authMiddleware);
-
-    // protectedServer.register(childRoutes);
-    // protectedServer.register(bookRoutes);
-    protectedServer.register(userRoutes, { prefix: '/users' });
-    // protectedServer.register(creditRoutes, { prefix: '/credits' });
-});
+server.register(childRoutes);
+server.register(bookRoutes);
+server.register(userRoutes, { prefix: '/users' });
 
 // Health Check
 server.get('/health', async () => {
