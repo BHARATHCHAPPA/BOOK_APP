@@ -5,20 +5,21 @@ import { fetchAuthSession } from 'aws-amplify/auth';
 import { Router } from '@angular/router';
 
 interface Book {
-    id: string;
-    title: string;
-    author: string;
-    description: string;
-    coverImage: string;
-    ageRange: string;
-    price: number;
+  id: string;
+  title: string;
+  author: string;
+  description: string;
+  coverImage: string;
+  ageRange: string;
+  price: number;
+  isPurchased?: boolean;
 }
 
 @Component({
-    selector: 'app-books',
-    standalone: true,
-    imports: [CommonModule],
-    template: `
+  selector: 'app-books',
+  standalone: true,
+  imports: [CommonModule],
+  template: `
     <div class="library-container">
       <header class="library-header">
         <div>
@@ -26,7 +27,6 @@ interface Book {
           <p class="subtitle">Explore magical worlds curated for young minds</p>
         </div>
         <div class="header-actions">
-           <!-- Placeholder for filter/search -->
            <span class="badge-pill">{{ books.length }} Books Available</span>
         </div>
       </header>
@@ -45,6 +45,8 @@ interface Book {
           <div class="card-image-wrapper">
              <img [src]="book.coverImage" [alt]="book.title" class="book-cover">
              <div class="age-badge">{{ book.ageRange }} yrs</div>
+             <!-- Purchased Badge -->
+             <div class="purchased-badge" *ngIf="book.isPurchased">Owned ✅</div>
           </div>
           
           <div class="card-content">
@@ -56,227 +58,122 @@ interface Book {
               <span class="price-tag">
                 <span class="currency-symbol">ⓒ</span> {{ book.price }}
               </span>
-              <button class="btn-read">Read Now</button>
+              
+              <!-- Conditional Button -->
+              <button 
+                class="btn-read" 
+                [class.btn-owned]="book.isPurchased"
+                (click)="handleBookAction(book)">
+                 {{ book.isPurchased ? 'Read Now' : (book.price === 0 ? 'Read Free' : 'Buy Now') }}
+              </button>
             </div>
           </div>
         </div>
       </div>
     </div>
   `,
-    styles: [`
-    :host {
-      display: block;
-      background-color: #f8f9fc;
-      min-height: 100vh;
-    }
-
-    .library-container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 2rem;
-    }
-
-    /* Header */
-    .library-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      margin-bottom: 3rem;
-      border-bottom: 2px solid #eef2f6;
-      padding-bottom: 1.5rem;
-    }
-
-    h1 {
-      font-size: 2.5rem;
-      color: #1a1f36;
-      margin: 0 0 0.5rem 0;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-    }
-
-    .subtitle {
-      color: #697386;
-      font-size: 1.1rem;
-      margin: 0;
-    }
-
-    .badge-pill {
-      background: #e3e8ee;
-      color: #4f566b;
-      padding: 0.5rem 1rem;
-      border-radius: 99px;
-      font-weight: 600;
-      font-size: 0.9rem;
-    }
-
-    /* Content */
-    .loading-state, .empty-state {
-      text-align: center;
-      padding: 4rem;
-      color: #8792a2;
-      font-size: 1.2rem;
-    }
-
-    /* Grid */
-    .book-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-      gap: 2.5rem;
-    }
-
-    /* Card */
-    .book-card {
-      background: white;
-      border-radius: 20px;
-      overflow: hidden;
-      box-shadow: 0 10px 20px rgba(0,0,0,0.04);
-      transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
-      display: flex;
-      flex-direction: column;
-      position: relative;
-    }
-
-    .book-card:hover {
-      transform: translateY(-8px);
-      box-shadow: 0 15px 30px rgba(0,0,0,0.1);
-    }
-
-    .card-image-wrapper {
-      position: relative;
-      height: 200px; /* Reduced height for cover */
-      overflow: hidden;
-      background: #f0f4f8;
-    }
-
-    .book-cover {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transition: transform 0.5s ease;
-    }
-
-    .book-card:hover .book-cover {
-      transform: scale(1.05);
-    }
-
-    .age-badge {
-      position: absolute;
-      top: 1rem;
-      right: 1rem;
-      background: rgba(255,255,255,0.95);
-      padding: 0.25rem 0.75rem;
-      border-radius: 8px;
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: #3c4257;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
-
-    .card-content {
-      padding: 1.5rem;
-      flex-grow: 1;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .book-title {
-      font-size: 1.25rem;
-      color: #1a1f36;
-      margin: 0 0 0.25rem 0;
-      line-height: 1.4;
-      font-weight: 600;
-    }
-
-    .book-author {
-      color: #697386;
-      font-size: 0.9rem;
-      margin: 0 0 1rem 0;
-    }
-
-    .book-desc {
-      color: #4f566b;
-      font-size: 0.95rem;
-      line-height: 1.5;
-      margin: 0 0 1.5rem 0;
-      flex-grow: 1; /* Push footer down */
-    }
-
-    .card-footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: auto;
-      border-top: 1px solid #e3e8ee;
-      padding-top: 1rem;
-    }
-
-    .price-tag {
-      font-weight: 700;
-      color: #3c4257;
-      font-size: 1.1rem;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
+  styles: [`
+    :host { display: block; background-color: #f8f9fc; min-height: 100vh; }
+    .library-container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+    .library-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 3rem; border-bottom: 2px solid #eef2f6; padding-bottom: 1.5rem; }
+    h1 { font-size: 2.5rem; color: #1a1f36; margin: 0 0 0.5rem 0; font-weight: 700; letter-spacing: -0.02em; }
+    .subtitle { color: #697386; font-size: 1.1rem; margin: 0; }
+    .badge-pill { background: #e3e8ee; color: #4f566b; padding: 0.5rem 1rem; border-radius: 99px; font-weight: 600; font-size: 0.9rem; }
+    .loading-state, .empty-state { text-align: center; padding: 4rem; color: #8792a2; font-size: 1.2rem; }
+    .book-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 2.5rem; }
     
-    .currency-symbol {
-      color: #f5a623; /* Gold coin color */
-    }
+    .book-card { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.04); transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1); display: flex; flex-direction: column; position: relative; }
+    .book-card:hover { transform: translateY(-8px); box-shadow: 0 15px 30px rgba(0,0,0,0.1); }
+    
+    .card-image-wrapper { position: relative; height: 200px; overflow: hidden; background: #f0f4f8; }
+    .book-cover { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
+    .book-card:hover .book-cover { transform: scale(1.05); }
+    
+    .age-badge { position: absolute; top: 1rem; right: 1rem; background: rgba(255,255,255,0.95); padding: 0.25rem 0.75rem; border-radius: 8px; font-size: 0.75rem; font-weight: 700; color: #3c4257; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .purchased-badge { position: absolute; top: 1rem; left: 1rem; background: #48bb78; color: white; padding: 0.25rem 0.75rem; border-radius: 8px; font-size: 0.75rem; font-weight: 700; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
 
-    .btn-read {
-      background: #5469d4;
-      color: white;
-      border: none;
-      padding: 0.6rem 1.2rem;
-      border-radius: 8px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    .btn-read:hover {
-      background: #4455bb;
-    }
+    .card-content { padding: 1.5rem; flex-grow: 1; display: flex; flex-direction: column; }
+    .book-title { font-size: 1.25rem; color: #1a1f36; margin: 0 0 0.25rem 0; line-height: 1.4; font-weight: 600; }
+    .book-author { color: #697386; font-size: 0.9rem; margin: 0 0 1rem 0; }
+    .book-desc { color: #4f566b; font-size: 0.95rem; line-height: 1.5; margin: 0 0 1.5rem 0; flex-grow: 1; }
+    
+    .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: auto; border-top: 1px solid #e3e8ee; padding-top: 1rem; }
+    .price-tag { font-weight: 700; color: #3c4257; font-size: 1.1rem; display: flex; align-items: center; gap: 4px; }
+    .currency-symbol { color: #f5a623; }
+    
+    .btn-read { background: #5469d4; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+    .btn-read:hover { background: #4455bb; }
+    .btn-owned { background: #48bb78; }
+    .btn-owned:hover { background: #38a169; }
   `]
 })
 export class BooksComponent implements OnInit {
-    books: Book[] = [];
-    loading = true;
+  books: Book[] = [];
+  loading = true;
 
-    constructor(
-        private http: HttpClient,
-        private cdr: ChangeDetectorRef,
-        private router: Router
-    ) { }
+  constructor(
+    private http: HttpClient,
+    private cdr: ChangeDetectorRef,
+    private router: Router
+  ) { }
 
-    async ngOnInit() {
-        try {
-            const session = await fetchAuthSession();
-            if (!session.tokens) {
-                this.router.navigate(['/login']);
-                return;
-            }
+  async ngOnInit() {
+    this.refreshLibrary();
+  }
 
-            const token = session.tokens.accessToken?.toString();
-            const headers = new HttpHeaders({
-                'Authorization': `Bearer ${token}`
-            });
+  async refreshLibrary() {
+    try {
+      const session = await fetchAuthSession();
+      if (!session.tokens) {
+        this.router.navigate(['/login']);
+        return;
+      }
 
-            this.http.get<Book[]>('http://localhost:3000/books', { headers }).subscribe({
-                next: (data) => {
-                    this.books = data;
-                    this.loading = false;
-                    this.cdr.detectChanges();
-                },
-                error: (err) => {
-                    console.error('Failed to load books', err);
-                    this.loading = false;
-                    this.cdr.detectChanges();
-                }
-            });
-        } catch (error) {
-            console.error('Auth error', error);
-            this.loading = false;
+      const token = session.tokens.accessToken?.toString();
+      const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
+
+      this.http.get<Book[]>('http://localhost:3000/books', { headers }).subscribe({
+        next: (data) => {
+          this.books = data;
+          this.loading = false;
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          console.error(err);
+          this.loading = false;
         }
+      });
+    } catch (e) { console.error(e); }
+  }
+
+  handleBookAction(book: Book) {
+    if (book.isPurchased) {
+      this.router.navigate(['/read', book.id]);
+      return;
     }
+    this.purchaseBook(book);
+  }
+
+  async purchaseBook(book: Book) {
+    if (!confirm(`Buy "${book.title}" for ${book.price} credits?`)) return;
+
+    const session = await fetchAuthSession();
+    const token = session.tokens?.accessToken?.toString();
+    const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
+
+    this.http.post(`http://localhost:3000/books/${book.id}/purchase`, {}, { headers }).subscribe({
+      next: (res: any) => {
+        alert(res.message);
+        // Refresh to update UI state (buttons, badges)
+        this.refreshLibrary();
+      },
+      error: (err) => {
+        if (err.status === 402) {
+          alert('Not enough credits!');
+        } else {
+          alert('Error: ' + err.message);
+        }
+      }
+    });
+  }
 }

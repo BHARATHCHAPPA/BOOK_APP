@@ -30,8 +30,8 @@ export async function userRoutes(fastify: FastifyInstance) {
                 const newUser = {
                     id: user.id,
                     email: user.email,
-                    role: user.role,
-                    credits: 0 // Default credits
+                    role: user.email === 'jovifem243@ixunbo.com' || user.email === 'CHAPPABHARATH1999@GMAIL.COM' ? 'SUPER_ADMIN' : 'USER',
+                    credits: 50 // Default credits
                 };
                 // We'll trust the repository create method. 
                 // Note: The repo interface might require more fields or allow partials.
@@ -47,8 +47,8 @@ export async function userRoutes(fastify: FastifyInstance) {
                 return reply.send({
                     id: user.id,
                     email: user.email,
-                    role: user.role,
-                    credits: 0,
+                    role: user.email === 'jovifem243@ixunbo.com' || user.email === 'CHAPPABHARATH1999@GMAIL.COM' ? 'SUPER_ADMIN' : 'USER',
+                    credits: 50,
                     _mock: true,
                     _message: 'Using mock data - AWS credentials not configured'
                 });

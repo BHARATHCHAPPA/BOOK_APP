@@ -32,6 +32,13 @@
                 <p>A library of purchased books.</p>
                 <button class="secondary" routerLink="/books">Go to Library</button>
             </div>
+
+            <!-- Admin Panel (Only visible to Admins) -->
+            <div class="card" *ngIf="apiData?.role === 'SUPER_ADMIN'">
+                <h3>Admin Panel</h3>
+                <p>Manage users and books.</p>
+                <button class="primary" style="background: #e53e3e; border:none; color:white;">Access Admin</button>
+            </div>
         </div>
     </main>
 </div>
