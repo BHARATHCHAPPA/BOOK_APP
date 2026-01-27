@@ -53,6 +53,7 @@ export class DynamoUserRepository implements IUserRepository {
         try {
             await docClient.send(new PutCommand(params));
         } catch (error) {
+            logger.error({ err: error }, 'Detailed DynamoDB Error');
             logger.warn('DynamoDB create user failed, using mock');
         }
         return user;

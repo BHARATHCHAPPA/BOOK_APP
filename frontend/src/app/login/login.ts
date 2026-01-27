@@ -111,6 +111,7 @@ export class LoginComponent {
     this.ngZone.run(() => {
       this.step = 'OTP';
       this.isLoading = false;
+      this.cdr.detectChanges(); // Ensure UI switches to OTP view
     });
   }
 
