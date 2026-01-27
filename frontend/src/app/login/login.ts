@@ -91,19 +91,34 @@ export class LoginComponent {
   }
 
   async handleSignUp() {
-    console.log('Starting SignUp...');
-    await signUp({
-      username: this.email,
-      password: this.password,
-      options: { userAttributes: { email: this.email } }
-    });
-    console.log('SignUp Success - switching to OTP');
-
-    // Direct assignment + manual change detection
-    this.step = 'OTP';
-    this.isLoading = false;
-    this.cdr.detectChanges(); // Force Angular to update the view
-    console.log('Change detection triggered, step is now:', this.step);
+    try {
+      console.log('Starting SignUp...');
+      await signUp({
+        username: this.email,
+        password: this.password,
+        options: { userAttributes: { email: this.email } }
+      });
+      this.step = 'OTP';
+      this.isLoading = false;
+      this.cdr.detectChanges();
+    } catch (error: any) {
+      if (error.name === 'UsernameExistsException') {
+        console.log('User exists, attempting to resend code...');
+        try {
+          const { resendSignUpCode } = await import('aws-amplify/auth');
+          await resendSignUpCode({ username: this.email });
+          this.step = 'OTP';
+          this.isLoading = false;
+          this.errorMessage = 'Account exists but was not verified. A new code has been sent.';
+          this.cdr.detectChanges();
+          return;
+        } catch (resendError: any) {
+          // If resend fails (e.g. user is actually CONFIRMED), let the original error flow handle it
+          console.error('Resend failed:', resendError);
+        }
+      }
+      throw error; // Re-throw to main handler if not recoverable
+    }
   }
 
   async handleForgotPassword() {
