@@ -1,4 +1,4 @@
-import { GetCommand, PutCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
+import { GetCommand, PutCommand, UpdateCommand, ScanCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb';
 import { docClient } from './dynamoClient';
 import { config } from '../../config/env';
 import { IUser, IUserRepository } from '../../domain/interfaces/userRepository';
@@ -27,9 +27,58 @@ export class DynamoUserRepository implements IUserRepository {
             const result = await docClient.send(new GetCommand(params));
             return result.Item as IUser || null;
         } catch (error) {
-            // Suppress error for dev environment without creds
-            // Return null so the service can create a new (mock) user
             return null;
+        }
+    }
+
+    async findAll(): Promise<IUser[]> {
+        // 1. Return Mock Users
+        const mockList = Object.values(MOCK_USERS);
+
+        // 2. Scan DynamoDB (Admin MVP only)
+        const params = {
+            TableName: this.tableName,
+            FilterExpression: 'Entity = :entity',
+            ExpressionAttributeValues: {
+                ':entity': 'User'
+            }
+        };
+
+        try {
+            const result = await docClient.send(new ScanCommand(params));
+            const dbList = result.Items as IUser[];
+
+            const map = new Map<string, IUser>();
+            mockList.forEach(u => map.set(u.id, u));
+            dbList?.forEach(u => map.set(u.id, u));
+
+            return Array.from(map.values());
+        } catch (e) {
+            return mockList;
+        }
+    }
+
+    async updateRole(userId: string, newRole: string): Promise<void> {
+        // Mock
+        if (MOCK_USERS[userId]) {
+            MOCK_USERS[userId].role = newRole;
+        }
+
+        const params = {
+            TableName: this.tableName,
+            Key: { PK: `USER#${userId}`, SK: `METADATA` },
+            UpdateExpression: 'SET #r = :role, updatedAt = :now',
+            ExpressionAttributeNames: { '#r': 'role' },
+            ExpressionAttributeValues: {
+                ':role': newRole,
+                ':now': new Date().toISOString()
+            }
+        };
+
+        try {
+            await docClient.send(new UpdateCommand(params));
+        } catch (e) {
+            logger.error({ err: e }, 'DynamoDB role update failed');
         }
     }
 
@@ -82,11 +131,11 @@ export class DynamoUserRepository implements IUserRepository {
             const result = await docClient.send(new UpdateCommand(params));
             return result.Attributes as IUser;
         } catch (error) {
-            // Fallback to mock if it exists
             if (MOCK_USERS[userId]) return MOCK_USERS[userId];
             throw error;
         }
     }
+
     async getPurchasedBooks(userId: string): Promise<string[]> {
         if (MOCK_USERS[userId] && (MOCK_USERS[userId] as any).purchasedBooks) {
             return (MOCK_USERS[userId] as any).purchasedBooks;
@@ -102,6 +151,23 @@ export class DynamoUserRepository implements IUserRepository {
                 user.purchasedBooks.push(bookId);
             }
         }
-        // TODO: Implement DynamoDB persist logic for purchases
+    }
+
+    async delete(userId: string): Promise<void> {
+        // Mock
+        if (MOCK_USERS[userId]) {
+            delete MOCK_USERS[userId];
+        }
+
+        const params = {
+            TableName: this.tableName,
+            Key: { PK: `USER#${userId}`, SK: `METADATA` }
+        };
+
+        try {
+            await docClient.send(new DeleteCommand(params));
+        } catch (e) {
+            logger.error({ err: e }, 'DynamoDB user delete failed');
+        }
     }
 }

@@ -12,7 +12,12 @@ const server = Fastify({
     logger: false // We use our own pino logger
 });
 
-server.register(cors);
+server.register(cors, {
+    origin: true, // Allow all origins (for dev)
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
+});
 
 // Dependency Injection (Manual for now, can use container later)
 const auditRepo = new DynamoAuditRepository();

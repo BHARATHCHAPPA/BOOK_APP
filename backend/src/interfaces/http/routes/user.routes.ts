@@ -2,6 +2,7 @@ import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { DynamoUserRepository } from '../../../infrastructure/database/DynamoUserRepository';
 import { authMiddleware } from '../../../infrastructure/auth/authMiddleware';
+import { UserRole } from '../../../domain/auth/permissions';
 
 const userRepo = new DynamoUserRepository();
 
@@ -18,31 +19,21 @@ export async function userRoutes(fastify: FastifyInstance) {
         }
 
         try {
-            // Fetch full user profile from DB
-            // Since we lazy-load users, if they don't exist in DB yet (first login), 
-            // we should validly return a basic profile or even create them here if we want strictly consistent data.
-            // For now, let's try to find them.
             let profile = await userRepo.findById(user.id);
 
             if (!profile) {
-                // Just-in-time creation (Self-Registration pattern)
-                // If user logged in (valid JWT) but no DB row, create it now.
                 const newUser = {
                     id: user.id,
                     email: user.email,
                     role: user.email === 'jovifem243@ixunbo.com' || user.email === 'CHAPPABHARATH1999@GMAIL.COM' ? 'SUPER_ADMIN' : 'USER',
-                    credits: 50 // Default credits
+                    credits: 50
                 };
-                // We'll trust the repository create method. 
-                // Note: The repo interface might require more fields or allow partials.
-                // Let's assume create works with standard IUser.
                 await userRepo.create(newUser as any);
                 profile = newUser as any;
             }
 
             return reply.send(profile);
         } catch (error: any) {
-            // If DynamoDB credentials are missing, return mock data
             if (error.name === 'CredentialsProviderError') {
                 return reply.send({
                     id: user.id,
@@ -55,5 +46,55 @@ export async function userRoutes(fastify: FastifyInstance) {
             }
             throw error;
         }
+    });
+
+    // ADMIN ROUTES
+
+    // GET /users - List all users (Admin Only)
+    fastify.get('/', async (req, reply) => {
+        const user = (req as any).user;
+        // Verify Admin Role (Quick Check)
+        const currentUser = await userRepo.findById(user.id);
+        if (currentUser?.role !== UserRole.SUPER_ADMIN) {
+            return reply.status(403).send({ error: 'Access Denied: Admins Only' });
+        }
+
+        return await userRepo.findAll();
+    });
+
+    // PUT /users/:id/role - Update User Role (Admin Only)
+    fastify.put('/:id/role', async (req, reply) => {
+        const user = (req as any).user;
+        const { id } = req.params as { id: string };
+        const body = req.body as { role: string };
+
+        // Verify Admin Role
+        const currentUser = await userRepo.findById(user.id);
+        if (currentUser?.role !== UserRole.SUPER_ADMIN) {
+            return reply.status(403).send({ error: 'Access Denied: Admins Only' });
+        }
+
+        // Validate Role (Simple check)
+        if (!Object.values(UserRole).includes(body.role as UserRole)) {
+            return reply.status(400).send({ error: 'Invalid User Role' });
+        }
+
+        await userRepo.updateRole(id, body.role);
+        return { success: true, message: `User ${id} role updated to ${body.role}` };
+    });
+
+    // DELETE /users/:id - Delete User (Admin Only)
+    fastify.delete('/:id', async (req, reply) => {
+        const user = (req as any).user;
+        const { id } = req.params as { id: string };
+
+        // Verify Admin
+        const currentUser = await userRepo.findById(user.id);
+        if (currentUser?.role !== UserRole.SUPER_ADMIN) {
+            return reply.status(403).send({ error: 'Access Denied: Admins Only' });
+        }
+
+        await (userRepo as any).delete(id);
+        return { success: true, message: `User ${id} deleted` };
     });
 }
