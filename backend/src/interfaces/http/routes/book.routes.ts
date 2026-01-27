@@ -1,50 +1,31 @@
 import { FastifyInstance } from 'fastify';
 import { authMiddleware } from '../../../infrastructure/auth/authMiddleware';
 import { DynamoBookRepository } from '../../../infrastructure/database/DynamoBookRepository';
-import { randomUUID } from 'crypto';
 import { z } from 'zod';
-import { UserRole } from '../../../domain/auth/permissions';
 
 export async function bookRoutes(server: FastifyInstance) {
     const bookRepo = new DynamoBookRepository();
 
-    // GET /children/:childId/books
-    server.get('/children/:childId/books', {
+    // GET /books - List all books (Catalog)
+    // Publicly accessible? Or authenticated? Let's make it authenticated for consistent auth flow.
+    server.get('/books', {
         preHandler: [authMiddleware]
     }, async (request, reply) => {
-        const user = request.user!;
-        const { childId } = request.params as { childId: string };
-
-        // TODO: Verify user owns child (Simple check: is this child in their family?)
-        // For V1 MVP, assuming UUIDs are hard to guess, but strictly we should check ownership.
-
-        return await bookRepo.findVersionsByChildId(childId);
+        // Parse pagination query params if needed
+        const result = await bookRepo.findAll();
+        return result.items;
     });
 
-    // POST /children/:childId/books (Create a book version)
-    server.post('/children/:childId/books', {
+    // GET /books/:id - Get specific book details
+    server.get('/books/:id', {
         preHandler: [authMiddleware]
     }, async (request, reply) => {
-        const user = request.user!;
-        const { childId } = request.params as { childId: string };
+        const { id } = request.params as { id: string };
+        const book = await bookRepo.findById(id);
 
-        const bodySchema = z.object({
-            templateId: z.string(),
-            versionName: z.string().optional(),
-        });
-
-        const body = bodySchema.parse(request.body);
-
-        const newBook = await bookRepo.createVersion({
-            id: randomUUID(),
-            childId,
-            templateId: body.templateId,
-            versionName: body.versionName,
-            isActive: true,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-        });
-
-        return newBook;
+        if (!book) {
+            return reply.status(404).send({ error: 'Book not found' });
+        }
+        return book;
     });
 }
