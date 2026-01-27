@@ -82,6 +82,30 @@ export class DynamoUserRepository implements IUserRepository {
         }
     }
 
+    async updateStatus(userId: string, status: string): Promise<void> {
+        // Mock
+        if (MOCK_USERS[userId]) {
+            (MOCK_USERS[userId] as any).status = status;
+        }
+
+        const params = {
+            TableName: this.tableName,
+            Key: { PK: `USER#${userId}`, SK: `METADATA` },
+            UpdateExpression: 'SET #s = :status, updatedAt = :now',
+            ExpressionAttributeNames: { '#s': 'status' },
+            ExpressionAttributeValues: {
+                ':status': status,
+                ':now': new Date().toISOString()
+            }
+        };
+
+        try {
+            await docClient.send(new UpdateCommand(params));
+        } catch (e) {
+            logger.error({ err: e }, 'DynamoDB status update failed');
+        }
+    }
+
     async create(user: IUser): Promise<IUser> {
         // 1. Save to Mock
         MOCK_USERS[user.id] = user;

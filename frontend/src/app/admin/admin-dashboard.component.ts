@@ -10,242 +10,303 @@ import { Router } from '@angular/router';
    standalone: true,
    imports: [CommonModule, FormsModule],
    template: `
-    <div class="admin-container">
-      <header class="admin-header">
-        <div>
-          <h1>Executive Pulse</h1>
-          <p class="subtitle">Real-time SaaS Health Check</p>
-        </div>
-        <div class="header-actions">
-           <button class="nav-btn" [class.active]="view === 'DASH'" (click)="view = 'DASH'">Pulse Board</button>
-           <button class="nav-btn" [class.active]="view === 'USERS'" (click)="view = 'USERS'; loadUsers()">User Manager</button>
-           <button class="nav-btn exit-btn" (click)="goBack()">Exit Admin</button>
-        </div>
-      </header>
-
-      <!-- VIEW: DASHBOARD (Full Rich Layout) -->
-      <div *ngIf="view === 'DASH'" class="fade-in">
-         
-         <!-- 1. Executive Snapshot -->
-         <div class="snapshot-grid">
-             <div class="card metric-card">
-                <h3>Gross Revenue</h3>
-                <div class="value">$2,450</div>
-                <div class="trend up">▲ 12% vs yesterday</div>
-             </div>
-             <div class="card metric-card">
-                <h3>Net Revenue</h3>
-                <div class="value">$2,108</div>
-                <div class="sub-text">(after Stripe fees)</div>
-             </div>
-             <div class="card metric-card">
-                <h3>Total Orders</h3>
-                <div class="value">84</div>
-                <div class="trend up">▲ 5%</div>
-             </div>
-             <div class="card metric-card">
-                <h3>StoryMaker Adoption</h3>
-                <div class="value">34%</div>
-                <div class="sub-text">Tier 2 uptake is healthy</div>
-             </div>
-             <div class="card metric-card danger-border">
-                <h3>Red Flags</h3>
-                <div class="flex-row">
-                    <span>Refunds: <b class="red">1</b></span>
-                    <span>Chargebacks: <b class="red">0</b></span>
-                </div>
-             </div>
-         </div>
-
-         <!-- 2. Sales & Funnel Section -->
-         <div class="mid-grid">
-             <!-- Product Mix -->
-             <div class="card">
-                <h2>Product Mix</h2>
-                <div class="mix-table">
-                   <div class="row header">
-                      <span>Product</span>
-                      <span>Orders</span>
-                      <span>Revenue</span>
-                   </div>
-                   <div class="row">
-                      <span>Name Book (Tier 1)</span>
-                      <span>45</span>
-                      <span>$1,125</span>
-                   </div>
-                   <div class="row highlight">
-                      <span>StoryMaker (Tier 2)</span>
-                      <span>28</span>
-                      <span>$980</span>
-                   </div>
-                   <div class="row">
-                      <span>Add-ons</span>
-                      <span>11</span>
-                      <span>$345</span>
-                   </div>
-                </div>
-                <div class="insight-box">
-                    <strong>Insight:</strong> Upsell conversion is 18%.
-                </div>
-             </div>
-
-             <!-- Funnel Health -->
-             <div class="card">
-                <h2>Funnel Health</h2>
-                <div class="funnel-steps">
-                   <div class="step">
-                      <span class="label">Visitors</span>
-                      <span class="count">1,240</span>
-                   </div>
-                   <div class="arrow">↓ 12%</div>
-                   <div class="step success">
-                      <span class="label">Purchases</span>
-                      <span class="count">84</span>
-                   </div>
-                </div>
-                <div class="abandoned-alert">
-                   ⚠️ 64 Abandoned Carts Today
-                </div>
-             </div>
-         </div>
-
-         <!-- 3. Alerts & Engagement -->
-         <div class="alerts-section">
-             <h2>⚠️ Alerts & Action Items (Founder Brain)</h2>
-             <div class="alert-list">
-                 <div class="alert-item critical">
-                    <span class="icon">🔥</span>
-                    <span class="msg">5 Chargebacks need review immediately</span>
-                    <button>Review</button>
-                 </div>
-                 <div class="alert-item warn">
-                    <span class="icon">⚠️</span>
-                    <span class="msg">12 Users have 0 save slots (Churn Risk)</span>
-                    <button>View Users</button>
-                 </div>
-             </div>
-         </div>
-      </div>
-
-      <!-- VIEW: USER MANAGER -->
-      <div *ngIf="view === 'USERS'" class="user-manager fade-in">
-          <div class="card">
-             <div class="card-header-row">
-                 <h2>User Management</h2>
-                 <button class="refresh-btn" (click)="loadUsers()">↻ Refresh</button>
-             </div>
-             
-             <div class="loading" *ngIf="loading">Loading users...</div>
-             
-             <div class="table-container">
-                 <table class="user-table" *ngIf="!loading">
-                    <thead>
-                       <tr>
-                          <th>Email</th>
-                          <th>Role</th>
-                          <th>Credits</th>
-                          <th>Change Role</th>
-                          <th>Actions</th>
-                       </tr>
-                    </thead>
-                    <tbody>
-                       <tr *ngFor="let user of users">
-                          <td>{{ user.email }}</td>
-                          <td><span class="badge" [ngClass]="user.role">{{ user.role }}</span></td>
-                          <td>{{ user.credits }}</td>
-                          <td>
-                             <select (change)="updateRole(user, $any($event.target).value)" [value]="user.role">
-                                <option value="USER">USER</option>
-                                <option value="SUPER_ADMIN">SUPER_ADMIN</option>
-                                <option value="FINANCE_ADMIN">FINANCE_ADMIN</option>
-                                <option value="OPS_ADMIN">OPS_ADMIN</option>
-                                <option value="DEVELOPER">DEVELOPER</option>
-                                <option value="SUPPORT">SUPPORT</option>
-                             </select>
-                          </td>
-                          <td>
-                              <button class="btn-delete" (click)="deleteUser(user)">Delete</button>
-                          </td>
-                       </tr>
-                    </tbody>
-                 </table>
-             </div>
+    <div class="flex h-screen bg-gray-50 font-sans">
+      
+      <!-- Sidebar -->
+      <aside class="w-64 bg-white border-r border-gray-200 hidden md:flex flex-col">
+          <div class="h-16 flex items-center px-6 border-b border-gray-100">
+             <div class="text-xl font-bold text-indigo-600 tracking-tight">Admin<span class="text-gray-800">Pulse</span></div>
           </div>
-      </div>
+          
+          <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
+             <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">Main</div>
+             <a (click)="view = 'DASH'" [class.bg-indigo-50]="view === 'DASH'" [class.text-indigo-600]="view === 'DASH'" class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-gray-600 hover:bg-gray-50 cursor-pointer transition-colors">
+                 <span class="text-lg">📊</span> Dashboard
+             </a>
+             <a (click)="loadUsers()" [class.bg-indigo-50]="view === 'USERS'" [class.text-indigo-600]="view === 'USERS'" class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-gray-600 hover:bg-gray-50 cursor-pointer transition-colors">
+                 <span class="text-lg">👥</span> User Management
+             </a>
 
+             <div class="mt-8 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">Analytics</div>
+             <a class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-gray-400 hover:text-gray-600 cursor-not-allowed">
+                 <span class="text-lg">📈</span> Revenue (Soon)
+             </a>
+             <a class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg text-gray-400 hover:text-gray-600 cursor-not-allowed">
+                 <span class="text-lg">🛒</span> Orders (Soon)
+             </a>
+          </nav>
+
+          <div class="p-4 border-t border-gray-100">
+             <button (click)="goBack()" class="flex items-center gap-3 px-3 py-2 w-full text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                <span>🚪</span> Exit Admin
+             </button>
+          </div>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="flex-1 flex flex-col overflow-hidden">
+          
+          <!-- Top Header -->
+          <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 lg:px-8">
+              <div class="flex items-center gap-4">
+                  <h1 class="text-lg font-bold text-gray-800">{{ view === 'DASH' ? 'Executive Overview' : 'User Management' }}</h1>
+                  <span *ngIf="loading" class="text-xs text-indigo-500 animate-pulse font-medium">Updating...</span>
+              </div>
+              <div class="flex items-center gap-2">
+                 <div class="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-xs">AD</div>
+              </div>
+          </header>
+
+          <!-- Scrollable View Area -->
+          <div class="flex-1 overflow-y-auto p-6 lg:p-8">
+              
+              <!-- VIEW: DASHBOARD -->
+              <div *ngIf="view === 'DASH'" class="space-y-6 animate-fade-in">
+                  
+                  <!-- Top Stats Row -->
+                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                      <!-- Card 1 -->
+                      <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                          <div class="flex justify-between items-start mb-4">
+                              <div class="h-10 w-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
+                                  <span class="text-xl">💰</span>
+                              </div>
+                              <span class="text-xs font-medium px-2 py-1 rounded-full bg-green-50 text-green-700">▲ 11.01%</span>
+                          </div>
+                          <div class="text-2xl font-bold text-gray-900">$3,782</div>
+                          <div class="text-sm text-gray-500 mt-1">Total Revenue</div>
+                      </div>
+
+                      <!-- Card 2 -->
+                      <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                          <div class="flex justify-between items-start mb-4">
+                              <div class="h-10 w-10 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+                                  <span class="text-xl">🛒</span>
+                              </div>
+                              <span class="text-xs font-medium px-2 py-1 rounded-full bg-green-50 text-green-700">▲ 9.05%</span>
+                          </div>
+                          <div class="text-2xl font-bold text-gray-900">5,359</div>
+                          <div class="text-sm text-gray-500 mt-1">Total Orders</div>
+                      </div>
+
+                      <!-- Card 3 -->
+                      <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                          <div class="flex justify-between items-start mb-4">
+                              <div class="h-10 w-10 rounded-lg bg-purple-50 flex items-center justify-center text-purple-600">
+                                  <span class="text-xl">👥</span>
+                              </div>
+                              <span class="text-xs font-medium px-2 py-1 rounded-full bg-green-50 text-green-700">▲ 5.2%</span>
+                          </div>
+                          <div class="text-2xl font-bold text-gray-900">1,249</div>
+                          <div class="text-sm text-gray-500 mt-1">Active Users</div>
+                      </div>
+
+                      <!-- Card 4 -->
+                      <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                         <div class="flex justify-between items-start mb-4">
+                              <div class="h-10 w-10 rounded-lg bg-orange-50 flex items-center justify-center text-orange-600">
+                                  <span class="text-xl">⚠️</span>
+                              </div>
+                              <span class="text-xs font-medium px-2 py-1 rounded-full bg-red-50 text-red-700">Action Reqd</span>
+                          </div>
+                          <div class="text-2xl font-bold text-gray-900">3</div>
+                          <div class="text-sm text-gray-500 mt-1">Pending Alerts</div>
+                      </div>
+                  </div>
+
+                  <!-- Charts / Big Sections -->
+                  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                      <!-- Monthly Sales (Big Bar Chart Placeholder) -->
+                      <div class="lg:col-span-2 bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+                          <div class="flex items-center justify-between mb-6">
+                              <h3 class="font-bold text-gray-800">Monthly Sales</h3>
+                              <button class="text-gray-400 hover:text-gray-600">•••</button>
+                          </div>
+                          <div class="h-64 flex items-end justify-between gap-2 px-2">
+                              <!-- Fake Bars with Tailwind heights -->
+                              <div class="w-full bg-indigo-50 rounded-t-sm hover:bg-indigo-100 transition-colors group relative" style="height: 40%">
+                                  <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block text-xs bg-gray-800 text-white px-2 py-1 rounded">40%</div>
+                              </div>
+                              <div class="w-full bg-indigo-500 rounded-t-sm shadow-lg hover:bg-indigo-600 transition-colors" style="height: 75%"></div>
+                              <div class="w-full bg-indigo-50 rounded-t-sm hover:bg-indigo-100 transition-colors" style="height: 55%"></div>
+                              <div class="w-full bg-indigo-50 rounded-t-sm hover:bg-indigo-100 transition-colors" style="height: 80%"></div>
+                              <div class="w-full bg-indigo-50 rounded-t-sm hover:bg-indigo-100 transition-colors" style="height: 45%"></div>
+                              <div class="w-full bg-indigo-50 rounded-t-sm hover:bg-indigo-100 transition-colors" style="height: 60%"></div>
+                              <div class="w-full bg-indigo-500 rounded-t-sm shadow-lg hover:bg-indigo-600 transition-colors" style="height: 90%"></div>
+                              <div class="w-full bg-indigo-50 rounded-t-sm hover:bg-indigo-100 transition-colors" style="height: 65%"></div>
+                              <div class="w-full bg-indigo-50 rounded-t-sm hover:bg-indigo-100 transition-colors" style="height: 50%"></div>
+                              <div class="w-full bg-indigo-50 rounded-t-sm hover:bg-indigo-100 transition-colors" style="height: 70%"></div>
+                              <div class="w-full bg-indigo-50 rounded-t-sm hover:bg-indigo-100 transition-colors" style="height: 85%"></div>
+                              <div class="w-full bg-indigo-50 rounded-t-sm hover:bg-indigo-100 transition-colors" style="height: 55%"></div>
+                          </div>
+                          <div class="flex justify-between mt-4 text-xs text-gray-400 font-medium uppercase">
+                              <span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span>
+                              <span>Jul</span><span>Aug</span><span>Sep</span><span>Oct</span><span>Nov</span><span>Dec</span>
+                          </div>
+                      </div>
+
+                      <!-- Monthly Target (Gauge Placeholder) -->
+                      <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col items-center justify-center text-center">
+                          <h3 class="font-bold text-gray-800 self-start mb-2">Monthly Target</h3>
+                          <p class="text-sm text-gray-500 self-start mb-8">Target you've set for each month</p>
+                          
+                          <div class="relative w-48 h-24 overflow-hidden mb-4">
+                             <div class="w-48 h-48 rounded-full border-[12px] border-indigo-100 border-t-indigo-500 border-r-indigo-500 transform -rotate-45 box-border"></div>
+                             <div class="absolute bottom-0 left-1/2 -translate-x-1/2 text-2xl font-bold text-gray-800">75.55%</div>
+                          </div>
+                          
+                          <p class="text-sm text-green-600 font-medium bg-green-50 px-3 py-1 rounded-full mb-4">+10%</p>
+                          <p class="text-xs text-gray-400 max-w-[200px] leading-relaxed">You earn $3,287 today, it's higher than last month.</p>
+                          
+                          <div class="grid grid-cols-3 gap-4 w-full mt-8 pt-6 border-t border-gray-100">
+                             <div>
+                                <div class="text-xs text-gray-400 mb-1">Target</div>
+                                <div class="font-bold text-gray-800">$20k ▼</div>
+                             </div>
+                             <div>
+                                <div class="text-xs text-gray-400 mb-1">Revenue</div>
+                                <div class="font-bold text-gray-800">$16k ▲</div>
+                             </div>
+                             <div>
+                                <div class="text-xs text-gray-400 mb-1">Today</div>
+                                <div class="font-bold text-gray-800">$1.2k ▲</div>
+                             </div>
+                          </div>
+                      </div>
+                  </div>
+
+                  <!-- Recent Orders Table -->
+                  <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                      <div class="p-6 border-b border-gray-50 flex justify-between items-center">
+                          <h3 class="font-bold text-gray-800">Recent Orders</h3>
+                          <button class="text-sm text-indigo-600 font-medium hover:text-indigo-700">See All</button>
+                      </div>
+                      <div class="overflow-x-auto">
+                          <table class="w-full text-left border-collapse">
+                             <thead class="bg-gray-50 text-xs uppercase text-gray-400 font-semibold">
+                                <tr>
+                                   <th class="px-6 py-4">Product Name</th>
+                                   <th class="px-6 py-4">Category</th>
+                                   <th class="px-6 py-4">Price</th>
+                                   <th class="px-6 py-4">Status</th>
+                                </tr>
+                             </thead>
+                             <tbody class="divide-y divide-gray-50">
+                                <tr class="hover:bg-gray-50/50 transition-colors group">
+                                   <td class="px-6 py-4 font-medium text-gray-800 flex items-center gap-3">
+                                      <div class="h-10 w-10 rounded bg-gray-100"></div> MacBook Pro 13"
+                                   </td>
+                                   <td class="px-6 py-4 text-gray-500">Laptop</td>
+                                   <td class="px-6 py-4 text-gray-800 font-bold">$2,399</td>
+                                   <td class="px-6 py-4"><span class="px-3 py-1 rounded-full text-xs font-bold bg-green-50 text-green-600">Delivered</span></td>
+                                </tr>
+                                <tr class="hover:bg-gray-50/50 transition-colors group">
+                                   <td class="px-6 py-4 font-medium text-gray-800 flex items-center gap-3">
+                                      <div class="h-10 w-10 rounded bg-gray-100"></div> Apple Watch Ultra
+                                   </td>
+                                   <td class="px-6 py-4 text-gray-500">Watch</td>
+                                   <td class="px-6 py-4 text-gray-800 font-bold">$879</td>
+                                   <td class="px-6 py-4"><span class="px-3 py-1 rounded-full text-xs font-bold bg-yellow-50 text-yellow-600">Pending</span></td>
+                                </tr>
+                                <tr class="hover:bg-gray-50/50 transition-colors group">
+                                   <td class="px-6 py-4 font-medium text-gray-800 flex items-center gap-3">
+                                      <div class="h-10 w-10 rounded bg-gray-100"></div> iPhone 15 Pro
+                                   </td>
+                                   <td class="px-6 py-4 text-gray-500">Smartphone</td>
+                                   <td class="px-6 py-4 text-gray-800 font-bold">$1,299</td>
+                                   <td class="px-6 py-4"><span class="px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-600">Shipped</span></td>
+                                </tr>
+                             </tbody>
+                          </table>
+                      </div>
+                  </div>
+
+              </div>
+
+              <!-- VIEW: USER MANAGEMENT -->
+              <div *ngIf="view === 'USERS'" class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden animate-fade-in">
+                  <div class="p-6 border-b border-gray-50 flex justify-between items-center bg-gray-50/30">
+                      <div>
+                          <h3 class="font-bold text-gray-800 text-lg">System Users</h3>
+                          <p class="text-sm text-gray-400 mt-1">Manage platform access and roles.</p>
+                      </div>
+                      <button (click)="loadUsers()" class="px-4 py-2 bg-white border border-gray-200 shadow-sm rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-indigo-600 transition-all flex items-center gap-2">
+                         <span>↻</span> Refresh List
+                      </button>
+                  </div>
+                  
+                  <div class="overflow-x-auto">
+                      <table class="w-full text-left border-collapse">
+                         <thead class="bg-gray-50 text-xs uppercase text-gray-400 font-semibold tracking-wider">
+                            <tr>
+                               <th class="px-6 py-4">User Identity</th>
+                               <th class="px-6 py-4">Access Role</th>
+                               <th class="px-6 py-4">Credits</th>
+                               <th class="px-6 py-4">Change Role</th>
+                               <th class="px-6 py-4 text-right">Actions</th>
+                            </tr>
+                         </thead>
+                         <tbody class="divide-y divide-gray-50">
+                            <tr *ngFor="let user of users" class="hover:bg-indigo-50/30 transition-colors group">
+                               <td class="px-6 py-4">
+                                  <div class="font-medium text-gray-800">{{ user.email }}</div>
+                                  <div class="text-xs text-gray-400 mt-0.5">{{ user.id }}</div>
+                               </td>
+                               <td class="px-6 py-4">
+                                  <span class="px-3 py-1 rounded-full text-xs font-bold tracking-wide" 
+                                    [ngClass]="{
+                                        'bg-red-50 text-red-600': user.role === 'SUPER_ADMIN',
+                                        'bg-blue-50 text-blue-600': user.role === 'DEVELOPER',
+                                        'bg-green-50 text-green-600': user.role === 'OPS_ADMIN',
+                                        'bg-orange-50 text-orange-600': user.role === 'FINANCE_ADMIN',
+                                        'bg-gray-100 text-gray-600': user.role === 'USER'
+                                    }">
+                                    {{ user.role.replace('_', ' ') }}
+                                  </span>
+                               </td>
+                               <td class="px-6 py-4 font-medium text-gray-600">{{ user.credits }}</td>
+                               <td class="px-6 py-4">
+                                  <select (change)="updateRole(user, $any($event.target).value)" [value]="user.role" 
+                                    class="text-sm border-gray-200 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 cursor-pointer bg-white py-1 pl-2 pr-8">
+                                     <option value="USER">User</option>
+                                     <option value="SUPER_ADMIN">Super Admin</option>
+                                     <option value="FINANCE_ADMIN">Finance Admin</option>
+                                     <option value="OPS_ADMIN">Ops Admin</option>
+                                     <option value="DEVELOPER">Developer</option>
+                                     <option value="SUPPORT">Support</option>
+                                  </select>
+                               </td>
+                               <td class="px-6 py-4 text-right">
+                                  <button (click)="deleteUser(user)" class="text-gray-400 hover:text-red-600 transition-colors p-2 rounded-full hover:bg-red-50">
+                                     <span class="sr-only">Delete</span>
+                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                       <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                                       <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                                     </svg>
+                                  </button>
+                               </td>
+                            </tr>
+                         </tbody>
+                      </table>
+                  </div>
+              </div>
+
+          </div>
+      </main>
     </div>
   `,
    styles: [`
-    .admin-container { padding: 2rem; background: #f0f2f5; min-height: 100vh; font-family: 'Inter', sans-serif; }
-    .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
-    h1 { margin: 0; font-size: 1.8rem; color: #1a202c; }
-    .subtitle { margin: 0; color: #718096; }
+    /* Using Utility Classes but keeping some custom animations */
+    :host { display: block; height: 100vh; }
     
-    /* Nav */
-    .header-actions { display: flex; gap: 1rem; }
-    .nav-btn { background: white; border: 1px solid #e2e8f0; padding: 0.5rem 1.2rem; cursor: pointer; font-weight: 600; color: #4a5568; border-radius: 6px; transition: all 0.2s; }
-    .nav-btn:hover { background: #edf2f7; }
-    .nav-btn.active { background: #2b6cb0; color: white; border-color: #2b6cb0; }
-    .exit-btn { color: #c53030; border-color: #feb2b2; }
-    .exit-btn:hover { background: #fff5f5; }
-
-    /* Snapshot Grid */
-    .snapshot-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
-    .card { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-    .metric-card h3 { margin: 0 0 0.5rem 0; font-size: 0.85rem; color: #718096; text-transform: uppercase; font-weight: 700; }
-    .value { font-size: 1.8rem; font-weight: 700; color: #2d3748; }
-    .trend { font-size: 0.85rem; margin-top: 0.25rem; }
-    .trend.up { color: #38a169; }
-    .sub-text { font-size: 0.8rem; color: #a0aec0; }
-    .danger-border { border-left: 4px solid #e53e3e; }
-    .red { color: #e53e3e; }
-    .flex-row { display: flex; justify-content: space-between; gap: 1rem; font-size: 0.9rem; }
-
-    /* Mid Grid */
-    .mid-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; margin-bottom: 2rem; }
-    @media (max-width: 900px) { .mid-grid { grid-template-columns: 1fr; } }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
     
-    /* Mix Table */
-    .mix-table .row { display: grid; grid-template-columns: 2fr 1fr 1fr; padding: 0.75rem 0; border-bottom: 1px solid #edf2f7; }
-    .header { font-weight: 600; color: #718096; font-size: 0.85rem; }
-    .highlight { background: #ebf8ff; margin: 0 -0.5rem; padding: 0.75rem 0.5rem; border-radius: 4px; }
-    .insight-box { margin-top: 1rem; background: #fffaf0; padding: 0.8rem; border-left: 4px solid #ed8936; font-size: 0.9rem; color: #744210; }
-
-    /* Funnel */
-    .funnel-steps { display: flex; flex-direction: column; align-items: center; }
-    .step { width: 100%; border: 1px solid #e2e8f0; padding: 0.8rem; text-align: center; border-radius: 6px; background: #f7fafc; }
-    .step.success { background: #f0fff4; border-color: #9ae6b4; }
-    .arrow { color: #718096; font-size: 0.9rem; margin: 0.4rem 0; }
-    .abandoned-alert { margin-top: 1rem; color: #c53030; background: #fff5f5; padding: 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.85rem; width: 100%; text-align: center; }
-
-    /* Alerts */
-    .alerts-section { margin-bottom: 2rem; }
-    .alert-item { display: flex; align-items: center; padding: 1rem; border-radius: 6px; background: white; margin-bottom: 0.5rem; border: 1px solid #e2e8f0; }
-    .alert-item.critical { border-left: 5px solid #e53e3e; }
-    .alert-item.warn { border-left: 5px solid #ecc94b; }
-    .icon { font-size: 1.2rem; margin-right: 1rem; }
-    .msg { flex-grow: 1; font-weight: 500; }
-
-    /* User Manager */
-    .table-container { overflow-x: auto; }
-    .user-table { width: 100%; border-collapse: collapse; min-width: 600px; }
-    .user-table th { text-align: left; padding: 1rem; background: #f7fafc; border-bottom: 2px solid #e2e8f0; font-size: 0.85rem; color: #4a5568; }
-    .user-table td { padding: 1rem; border-bottom: 1px solid #e2e8f0; color: #2d3748; }
-    
-    .badge { padding: 0.25rem 0.75rem; border-radius: 99px; font-size: 0.75rem; font-weight: 700; display: inline-block; }
-    .badge.SUPER_ADMIN { background: #fed7d7; color: #9b2c2c; }
-    .badge.FINANCE_ADMIN { background: #feebc8; color: #dd6b20; }
-    .badge.OPS_ADMIN { background: #c6f6d5; color: #276749; }
-    .badge.DEVELOPER { background: #bee3f8; color: #2c5282; }
-    .badge.SUPPORT { background: #e9d8fd; color: #553c9a; }
-    .badge.USER { background: #edf2f7; color: #4a5568; }
-
-    select { padding: 0.4rem; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.9rem; }
-    .btn-delete { background: #fff5f5; color: #c53030; border: 1px solid #feb2b2; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; transition: 0.2s; }
-    .btn-delete:hover { background: #c53030; color: white; }
-    
-    .card-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-    .refresh-btn { background: none; border: none; color: #3182ce; cursor: pointer; font-weight: 600; }
+    /* Scrollbar Polish */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #a0aec0; }
   `]
 })
 export class AdminDashboardComponent implements OnInit {
@@ -262,6 +323,7 @@ export class AdminDashboardComponent implements OnInit {
    }
 
    async loadUsers() {
+      this.view = 'USERS'; // Switch view automatically
       this.loading = true;
       try {
          const session = await fetchAuthSession();
@@ -295,13 +357,13 @@ export class AdminDashboardComponent implements OnInit {
                user.role = newRole; // Optimistic
                alert('Role updated!');
             },
-            error: (err) => alert('Failed to update role. Ensure backend is running and you have permissions.')
+            error: (err) => alert('Failed to update role. Ensure backend is running.')
          });
       } catch (e) { }
    }
 
    async deleteUser(user: any) {
-      if (!confirm(`Are you sure you want to PERMANENTLY delete user ${user.email}?`)) return;
+      if (!confirm(`Are you sure you want to PERMANENTLY delete user ${user.email}? This action cannot be undone.`)) return;
 
       try {
          const session = await fetchAuthSession();
@@ -311,7 +373,7 @@ export class AdminDashboardComponent implements OnInit {
          this.http.delete(`http://localhost:3000/users/${user.id}`, { headers }).subscribe({
             next: () => {
                this.users = this.users.filter(u => u.id !== user.id);
-               alert('User deleted.');
+               alert('User deleted successfully.');
             },
             error: (err) => alert('Failed to delete user.')
          });
