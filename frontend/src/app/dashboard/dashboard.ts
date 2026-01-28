@@ -8,9 +8,9 @@ import { Router } from '@angular/router';
 // --- MOCK DATA FOR BRAVESOUP PULSE ---
 const MOCK_PULSE_DATA = {
   executive: {
-    revenue: { total: '$24,502', net: '$21,005', growth: '+12%', trend: 'up' },
-    orders: { count: 843, aov: '$29.00', perDay: 28, trend: 'up' },
-    customers: { new: 612, returning: 231, storyMakerAdoption: '34%' },
+    revenue: { total: '$24,502', net: '$21,005', growth: '12%', trend: 'up' },
+    orders: { count: 843, aov: '$29.00', perDay: 28, growth: '8%', trend: 'up' },
+    customers: { new: 612, returning: 231, storyMakerAdoption: '34%', growth: '4%', trend: 'up' },
     redFlags: { refunds: 5, chargebacks: 1, failedPayments: 3 }
   },
   salesMix: {
@@ -61,26 +61,26 @@ const MOCK_PULSE_DATA = {
   ]
 };
 const MOCK_VARIANTS = {
-  today: {
-    revenue: { total: '$1,204', net: '$950', growth: '+2.1%', trend: 'up' },
-    orders: { count: 32, aov: '$37.60', perDay: 32, trend: 'up' },
-    customers: { new: 12, returning: 8, storyMakerAdoption: '28%' },
-    redFlags: { refunds: 0, chargebacks: 0, failedPayments: 1 },
-    engagement: { booksCreated: 45, newVersions: 12, cyaPaths: 4, aiNarrations: 3, manualRecordings: 1, saveSlotsUsed: '45%', creditsSpent: 20 }
-  },
   '7d': {
-    revenue: { total: '$8,450', net: '$7,100', growth: '+12%', trend: 'up' },
-    orders: { count: 215, aov: '$39.20', perDay: 30, trend: 'up' },
-    customers: { new: 85, returning: 42, storyMakerAdoption: '35%' },
+    revenue: { total: '$8,450', net: '$7,100', growth: '12%', trend: 'up' },
+    orders: { count: 215, aov: '$39.20', perDay: 30, growth: '5%', trend: 'up' },
+    customers: { new: 85, returning: 42, storyMakerAdoption: '35%', growth: '12%', trend: 'up' },
     redFlags: { refunds: 2, chargebacks: 1, failedPayments: 3 },
     engagement: { booksCreated: 320, newVersions: 98, cyaPaths: 25, aiNarrations: 18, manualRecordings: 5, saveSlotsUsed: '46%', creditsSpent: 150 }
   },
   '30d': {
-    revenue: { total: '$24,502', net: '$21,005', growth: '+8%', trend: 'up' },
-    orders: { count: 843, aov: '$29.00', perDay: 28, trend: 'down' },
-    customers: { new: 612, returning: 231, storyMakerAdoption: '34%' },
+    revenue: { total: '$24,502', net: '$21,005', growth: '8%', trend: 'up' },
+    orders: { count: 843, aov: '$29.00', perDay: 28, growth: '3%', trend: 'down' },
+    customers: { new: 612, returning: 231, storyMakerAdoption: '34%', growth: '2%', trend: 'neutral' },
     redFlags: { refunds: 5, chargebacks: 1, failedPayments: 3 },
     engagement: { booksCreated: 1024, newVersions: 312, cyaPaths: 89, aiNarrations: 56, manualRecordings: 12, saveSlotsUsed: '45%', creditsSpent: 420 }
+  },
+  '90d': {
+    revenue: { total: '$68,900', net: '$59,100', growth: '15%', trend: 'up' },
+    orders: { count: 2450, aov: '$28.50', perDay: 27, growth: '6%', trend: 'up' },
+    customers: { new: 1850, returning: 640, storyMakerAdoption: '38%', growth: '5%', trend: 'up' },
+    redFlags: { refunds: 12, chargebacks: 4, failedPayments: 8 },
+    engagement: { booksCreated: 2900, newVersions: 850, cyaPaths: 240, aiNarrations: 150, manualRecordings: 45, saveSlotsUsed: '52%', creditsSpent: 1100 }
   }
 };
 
@@ -97,19 +97,20 @@ const MOCK_CUSTOMERS = REAL_NAMES.map((name, i) => ({
   role: i % 4 === 0 ? 'Premium' : 'Standard',
   joined: new Date(2023, i, 15).toLocaleDateString(),
   credits: (i * 15) + 5,
+  profileScore: Math.floor(Math.random() * 40) + 60,
   avatar: name.charAt(0),
   books: [
-    { title: 'The Lost World', type: 'Fiction', created: '2023-11-01', length: '4h 12m' },
-    { title: 'My Memoirs', type: 'Biography', created: '2024-01-15', length: '6h 30m' },
-    ...(i % 2 === 0 ? [{ title: 'Bedtime Stories', type: 'Children', created: '2024-02-10', length: '20m' }] : [])
+    { title: 'The Lost World', adventure: 'Fiction', created: '2023-11-01', length: '4h 12m' },
+    { title: 'My Memoirs', adventure: 'Biography', created: '2024-01-15', length: '6h 30m' },
+    ...(i % 2 === 0 ? [{ title: 'Bedtime Stories', adventure: 'Children', created: '2024-02-10', length: '20m' }] : [])
   ],
   voices: [
-    { name: 'My Clone', type: 'Cloned', status: 'Active' },
-    ...(i % 3 === 0 ? [{ name: 'Grandma', type: 'Cloned', status: 'Processing' }] : [])
+    { name: i % 2 === 0 ? 'Siri' : 'Alexa', type: 'AI Voice', status: 'Active' },
+    ...(i % 3 === 0 ? [{ name: 'Grandma', type: 'AI Voice', status: 'Processing' }] : [])
   ],
   transactions: [
-    { date: '2024-01-15', desc: 'Credit Pack (50)', amount: '$49.00' },
-    { date: '2023-12-10', desc: 'Subscription', amount: '$12.00' }
+    { date: '2024-01-15', desc: 'Gift Card', amount: '$49.00' },
+    { date: '2023-12-10', desc: 'Gift Card', amount: '$12.00' }
   ]
 }));
 
@@ -271,9 +272,7 @@ const MOCK_NOTIFICATIONS = [
                              <div class="dd-item">
                                  <span class="dd-icon">⚙️</span> Account settings
                              </div>
-                             <div class="dd-item">
-                                 <span class="dd-icon">ℹ️</span> Support
-                             </div>
+
                              <div class="dd-divider"></div>
                              <div class="dd-item" (click)="onLogout()">
                                  <span class="dd-icon">⬅️</span> Sign out
@@ -296,11 +295,11 @@ const MOCK_NOTIFICATIONS = [
                       <div class="section-header">
                           <h2>Executive Snapshot</h2>
                           <div class="range-toolbar">
-                             <div class="range-group">
-                                 <button class="range-btn" (click)="selectTimeRange('today')" [class.active]="timeRange === 'today'">Monthly</button>
-                                 <button class="range-btn" (click)="selectTimeRange('7d')" [class.active]="timeRange === '7d'">Quarterly</button>
-                                 <button class="range-btn" (click)="selectTimeRange('30d')" [class.active]="timeRange === '30d'">Annually</button>
-                             </div>
+                              <div class="range-group">
+                                  <button class="range-btn" (click)="selectTimeRange('7d')" [class.active]="timeRange === '7d'">7 Days</button>
+                                  <button class="range-btn" (click)="selectTimeRange('30d')" [class.active]="timeRange === '30d'">30 Days</button>
+                                  <button class="range-btn" (click)="selectTimeRange('90d')" [class.active]="timeRange === '90d'">90 Days</button>
+                              </div>
                              <div class="date-picker-trigger relative" (click)="showCalendar = !showCalendar">
                                  <span class="calendar-icon">📅</span>
                                  <span>Jan 21 to Jan 27</span>
@@ -335,7 +334,15 @@ const MOCK_NOTIFICATIONS = [
                               <div class="kpi-label">Gross Revenue</div>
                               <div class="kpi-value">{{ pulse.executive.revenue.total }}</div>
                               <div class="kpi-sub">Net (post-fees): {{ pulse.executive.revenue.net }}</div>
-                              <div class="trend up">{{ pulse.executive.revenue.growth }}</div>
+                              <div class="trend" [ngClass]="pulse.executive.revenue.trend">
+                                  <svg *ngIf="pulse.executive.revenue.trend === 'up'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="trend-icon">
+                                    <path fill-rule="evenodd" d="M10 17a.75.75 0 0 1-.75-.75V5.612L5.29 9.77a.75.75 0 0 1-1.08-1.04l5.25-5.5a.75.75 0 0 1 1.08 0l5.25 5.5a.75.75 0 1 1-1.08 1.04l-3.96-4.158V16.25A.75.75 0 0 1 10 17Z" clip-rule="evenodd" />
+                                  </svg>
+                                  <svg *ngIf="pulse.executive.revenue.trend === 'down'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="trend-icon">
+                                    <path fill-rule="evenodd" d="M10 3a.75.75 0 0 1 .75.75v10.638l3.96-4.158a.75.75 0 1 1 1.08 1.04l-5.25 5.5a.75.75 0 0 1-1.08 0l-5.25-5.5a.75.75 0 1 1 1.08-1.04l3.96 4.158V3.75A.75.75 0 0 1 10 3Z" clip-rule="evenodd" />
+                                  </svg>
+                                  {{ pulse.executive.revenue.growth }}
+                              </div>
                           </div>
                           <div class="kpi-card" *ngIf="role === 'MARKETING'">
                               <div class="kpi-label">Revenue</div>
@@ -347,14 +354,30 @@ const MOCK_NOTIFICATIONS = [
                               <div class="kpi-label">Total Orders</div>
                               <div class="kpi-value">{{ pulse.executive.orders.count }}</div>
                               <div class="kpi-sub">AOV: {{ pulse.executive.orders.aov }}</div>
-                              <div class="trend up">Daily: {{ pulse.executive.orders.perDay }}</div>
+                              <div class="trend" [ngClass]="pulse.executive.orders.trend">
+                                  <svg *ngIf="pulse.executive.orders.trend === 'up'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="trend-icon">
+                                    <path fill-rule="evenodd" d="M10 17a.75.75 0 0 1-.75-.75V5.612L5.29 9.77a.75.75 0 0 1-1.08-1.04l5.25-5.5a.75.75 0 0 1 1.08 0l5.25 5.5a.75.75 0 1 1-1.08 1.04l-3.96-4.158V16.25A.75.75 0 0 1 10 17Z" clip-rule="evenodd" />
+                                  </svg>
+                                  <svg *ngIf="pulse.executive.orders.trend === 'down'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="trend-icon">
+                                    <path fill-rule="evenodd" d="M10 3a.75.75 0 0 1 .75.75v10.638l3.96-4.158a.75.75 0 1 1 1.08 1.04l-5.25 5.5a.75.75 0 0 1-1.08 0l-5.25-5.5a.75.75 0 1 1 1.08-1.04l3.96 4.158V3.75A.75.75 0 0 1 10 3Z" clip-rule="evenodd" />
+                                  </svg>
+                                  {{ pulse.executive.orders.growth }}
+                              </div>
                           </div>
                           <!-- Customers -->
                           <div class="kpi-card">
                               <div class="kpi-label">StoryMaker Adoption</div>
                               <div class="kpi-value">{{ pulse.executive.customers.storyMakerAdoption }}</div>
                               <div class="kpi-sub">{{ pulse.executive.customers.new }} New Customers</div>
-                              <div class="trend neutral">Stable</div>
+                              <div class="trend" [ngClass]="pulse.executive.customers.trend">
+                                  <svg *ngIf="pulse.executive.customers.trend === 'up'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="trend-icon">
+                                    <path fill-rule="evenodd" d="M10 17a.75.75 0 0 1-.75-.75V5.612L5.29 9.77a.75.75 0 0 1-1.08-1.04l5.25-5.5a.75.75 0 0 1 1.08 0l5.25 5.5a.75.75 0 1 1-1.08 1.04l-3.96-4.158V16.25A.75.75 0 0 1 10 17Z" clip-rule="evenodd" />
+                                  </svg>
+                                  <svg *ngIf="pulse.executive.customers.trend === 'down'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="trend-icon">
+                                    <path fill-rule="evenodd" d="M10 3a.75.75 0 0 1 .75.75v10.638l3.96-4.158a.75.75 0 1 1 1.08 1.04l-5.25 5.5a.75.75 0 0 1-1.08 0l-5.25-5.5a.75.75 0 1 1 1.08-1.04l3.96 4.158V3.75A.75.75 0 0 1 10 3Z" clip-rule="evenodd" />
+                                  </svg>
+                                  {{ pulse.executive.customers.growth }}
+                              </div>
                           </div>
                           <!-- Red Flags -->
                           <div class="kpi-card danger-border">
@@ -604,20 +627,44 @@ const MOCK_NOTIFICATIONS = [
                       <div class="section-header">
                           <h2>System Users</h2>
                           <button (click)="loadUsers()" class="btn-clean">↻ Refresh</button>
-                      </div>
-                      <table class="data-table user-layout">
-                         <thead>
-                            <tr><th>User</th><th class="text-right">Actions</th></tr>
-                         </thead>
-                         <tbody>
-                            <tr *ngFor="let user of users">
-                               <td><div class="font-bold">{{ user.email }}</div><span class="badge" [ngClass]="user.role">{{ user.role }}</span></td>
-                               <td class="text-right">
-                                  <button (click)="deleteUser(user)" class="btn-icon">🗑️</button>
-                               </td>
-                            </tr>
-                         </tbody>
-                      </table>
+                       </div>
+                       <table class="data-table user-layout">
+                          <thead>
+                             <tr>
+                                 <th>User</th>
+                                 <th class="text-center">Role</th>
+                                 <th class="text-right">Actions</th>
+                             </tr>
+                          </thead>
+                          <tbody>
+                              <tr *ngFor="let user of users" class="user-row">
+                                 <td>
+                                     <div class="font-bold text-main">{{ user.email }}</div>
+                                 </td>
+                                 <td class="text-center">
+                                     <div class="role-selector-wrapper">
+                                         <select [ngModel]="user.role" (ngModelChange)="updateRole(user, $event)" class="role-select-badge" [ngClass]="user.role">
+                                             <option value="USER">User</option>
+                                             <option value="SUPER_ADMIN">Super Admin</option>
+                                             <option value="FINANCE_ADMIN">Finance Admin</option>
+                                             <option value="OPS_ADMIN">Ops Admin</option>
+                                             <option value="DEVELOPER">Developer</option>
+                                             <option value="SUPPORT">Support</option>
+                                             <option value="MARKETING">Marketing</option>
+                                         </select>
+                                         <span class="chevron-down-xs">▼</span>
+                                     </div>
+                                 </td>
+                                 <td class="text-right">
+                                    <button (click)="deleteUser(user)" class="icon-btn-sm danger" title="Delete User">
+                                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="svg-icon-xs">
+                                         <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                                       </svg>
+                                    </button>
+                                 </td>
+                              </tr>
+                          </tbody>
+                       </table>
                   </div>
               </div>
 
@@ -631,9 +678,9 @@ const MOCK_NOTIFICATIONS = [
                           <input type="text" placeholder="Search..." class="search-box">
                       </div>
                       <table class="data-table customer-layout hover-rows">
-                         <thead>
-                            <tr><th>Customer</th><th>Joined</th><th>Total Books</th><th>Credits</th><th>Status</th></tr>
-                         </thead>
+                          <thead>
+                             <tr><th>Customer</th><th>Joined</th><th>Total Books</th><th>Credits</th><th>Profile</th><th></th></tr>
+                          </thead>
                          <tbody>
                             <tr *ngFor="let cust of mockCustomers" (click)="openCustomer(cust)" style="cursor: pointer">
                                <td>
@@ -648,7 +695,14 @@ const MOCK_NOTIFICATIONS = [
                                <td>{{ cust.joined }}</td>
                                <td>{{ cust.books.length }}</td>
                                <td>{{ cust.credits }}</td>
-                               <td><span class="dot" style="background: #10b981"></span> Active</td>
+                                <td><span class="dot" style="background: #10b981"></span> {{ cust.profileScore }}%</td>
+                                <td>
+                                    <button class="icon-btn-sm" (click)="$event.stopPropagation(); openCustomer(cust)" title="Edit Customer">
+                                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="svg-icon-xs">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                                      </svg>
+                                    </button>
+                                </td>
                             </tr>
                          </tbody>
                       </table>
@@ -668,10 +722,6 @@ const MOCK_NOTIFICATIONS = [
                           <div class="profile-info">
                               <h2>{{ selectedCustomer.name }}</h2>
                               <p>{{ selectedCustomer.email }}</p>
-                              <div class="tags-row mt-2">
-                                  <span class="badge">{{ selectedCustomer.role }}</span>
-                                  <span class="badge text-gray">ID: {{ selectedCustomer.id }}</span>
-                              </div>
                           </div>
                           <div class="profile-stats">
                               <div class="stat-box"><h3>{{ selectedCustomer.credits }}</h3><span>Credits</span></div>
@@ -683,14 +733,21 @@ const MOCK_NOTIFICATIONS = [
                   <div class="dashboard-grid">
                       <!-- Books Table -->
                       <div class="section-container full-width">
-                          <div class="section-header"><h2>📚 Books & Types</h2></div>
+
+                          <div class="section-header">
+                            <h2 class="flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 24px; height: 24px;">
+                                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
+                                </svg>
+                                Books & Adventures
+                            </h2>
+                          </div>
                           <table class="data-table">
-                              <thead><tr><th>Title</th><th>Type</th><th>Length</th><th>Created</th></tr></thead>
+                              <thead><tr><th>Title</th><th>Adventure</th><th>Created</th></tr></thead>
                               <tbody>
                                   <tr *ngFor="let b of selectedCustomer.books">
                                       <td class="font-bold">{{ b.title }}</td>
-                                      <td><span class="tag">{{ b.type }}</span></td>
-                                      <td>{{ b.length }}</td>
+                                      <td><span class="tag">{{ b.adventure }}</span></td>
                                       <td>{{ b.created }}</td>
                                   </tr>
                               </tbody>
@@ -699,7 +756,14 @@ const MOCK_NOTIFICATIONS = [
 
                       <!-- Voices Table -->
                       <div class="section-container">
-                          <div class="section-header"><h2>🎤 Voices</h2></div>
+                          <div class="section-header">
+                            <h2 class="flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 24px; height: 24px;">
+                                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" />
+                                </svg>
+                                Voices
+                            </h2>
+                          </div>
                           <table class="data-table">
                               <thead><tr><th>Name</th><th>Type</th><th>Status</th></tr></thead>
                               <tbody>
@@ -714,7 +778,14 @@ const MOCK_NOTIFICATIONS = [
 
                       <!-- Credits/Transactions Table -->
                       <div class="section-container">
-                          <div class="section-header"><h2>💳 Credit History</h2></div>
+                          <div class="section-header">
+                              <h2 class="flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 24px; height: 24px;">
+                                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
+                                </svg>
+                                Credit History
+                              </h2>
+                          </div>
                           <table class="data-table">
                               <thead><tr><th>Date</th><th>Desc</th><th class="text-right">Amount</th></tr></thead>
                               <tbody>
@@ -860,8 +931,16 @@ const MOCK_NOTIFICATIONS = [
     .kpi-label { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
     .kpi-value { font-size: 1.5rem; font-weight: 800; color: var(--text-main); margin: 4px 0; }
     .kpi-sub { font-size: 0.75rem; color: var(--text-muted); }
-    .trend { display: inline-block; font-size: 0.7rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; margin-top: 4px; }
+    .trend { display: inline-flex; align-items: center; gap: 4px; font-size: 0.7rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; margin-top: 4px; }
     .trend.up { background: #ecfdf5; color: #059669; }
+    .trend.down { background: #fef2f2; color: #dc2626; }
+    .trend.neutral { background: #f3f4f6; color: #4b5563; }
+    .trend-icon { width: 12px; height: 12px; }
+    
+    :host.dark-theme .trend.up { background: rgba(6, 95, 70, 0.3); color: #6ee7b7; }
+    :host.dark-theme .trend.down { background: rgba(153, 27, 27, 0.3); color: #fca5a5; }
+    :host.dark-theme .trend.neutral { background: rgba(75, 85, 99, 0.3); color: #9ca3af; }
+
     .text-red { color: #dc2626; }
     .red-flag-row { display: flex; justify-content: space-between; font-size: 0.8rem; margin-top: 4px; }
 
@@ -1078,6 +1157,14 @@ const MOCK_NOTIFICATIONS = [
     @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
     /* UTILS */
+    .flex { display: flex; }
+    .items-center { align-items: center; }
+    .gap-2 { gap: 8px; }
+    .mb-4 { margin-bottom: 16px; }
+    .mt-2 { margin-top: 8px; }
+    
+    .text-center { text-align: center; }
+    
     .btn-clean { border: 1px solid #d1d5db; background: white; padding: 4px 12px; border-radius: 4px; cursor: pointer; }
     .btn-icon { border: none; background: transparent; cursor: pointer; }
     .empty-state { text-align: center; padding: 60px; }
@@ -1087,6 +1174,46 @@ const MOCK_NOTIFICATIONS = [
     .prop-row label { width: 100px; color: #6b7280; font-weight: 500; }
     .mono { font-family: monospace; }
     .text-right { text-align: right; }
+    
+    /* SYSTEM USER TABLE */
+    .user-info-cell { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .role-selector-wrapper { position: relative; display: inline-block; }
+    .role-select-badge { 
+        appearance: none; 
+        -webkit-appearance: none; 
+        padding: 4px 24px 4px 10px; 
+        border-radius: 20px; 
+        font-size: 0.7rem; 
+        font-weight: 700; 
+        border: 1px solid transparent; 
+        cursor: pointer; 
+        outline: none; 
+        background-color: #f3f4f6;
+        color: #374151;
+        transition: all 0.2s;
+    }
+    .role-select-badge:hover { filter: brightness(0.95); }
+    .role-select-badge.SUPER_ADMIN, .role-select-badge.FINANCE_ADMIN { background: #fee2e2; color: #991b1b; }
+    .role-select-badge.MARKETING { background: #fff7ed; color: #9a3412; }
+    .role-select-badge.OPS_ADMIN { background: #e0e7ff; color: #3730a3; }
+    .role-select-badge.DEVELOPER { background: #f0fdf4; color: #166534; }
+    .role-select-badge.SUPPORT { background: #fdf4ff; color: #86198f; }
+    .role-select-badge.USER { background: #f3f4f6; color: #374151; }
+    
+    .chevron-down-xs { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 0.5rem; pointer-events: none; opacity: 0.7; }
+    
+    .icon-btn-sm { background: transparent; border: none; cursor: pointer; padding: 6px; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+    .icon-btn-sm:hover { background: #f3f4f6; }
+    .icon-btn-sm.danger:hover { background: #fee2e2; color: #dc2626; }
+    .svg-icon-xs { width: 18px; height: 18px; }
+    
+    /* Dark Mode Adjustments */
+    :host.dark-theme .role-select-badge { background: #374151; color: #e5e7eb; }
+    :host.dark-theme .role-select-badge.SUPER_ADMIN { background: rgba(153, 27, 27, 0.3); color: #fca5a5; }
+    :host.dark-theme .role-select-badge.USER { background: rgba(55, 65, 81, 0.5); color: #d1d5db; }
+    :host.dark-theme .text-main { color: var(--text-main); }
+    :host.dark-theme .icon-btn-sm:hover { background: rgba(255, 255, 255, 0.1); }
+    :host.dark-theme .icon-btn-sm.danger:hover { background: rgba(239, 68, 68, 0.2); }
 
 
   `],
@@ -1104,7 +1231,7 @@ export class DashboardComponent implements OnInit {
   mockCustomers = MOCK_CUSTOMERS;
   notifications = MOCK_NOTIFICATIONS;
   selectedCustomer: any = null;
-  timeRange: 'today' | '7d' | '30d' = '30d'; /* Default to 30d to match initial data */
+  timeRange: '7d' | '30d' | '90d' = '30d'; /* Default to 30d */
   users: any[] = [];
   loading = false;
   showProfileMenu = false;
@@ -1188,14 +1315,35 @@ export class DashboardComponent implements OnInit {
   }
 
   async updateRole(user: any, newRole: string) {
-    if (!confirm(`Change role of ${user.email} to ${newRole}?`)) return;
+    // Constraint: Super Admin role cannot be changed to ANY other role
+    if (user.role === 'SUPER_ADMIN') {
+      alert('Action Denied: Super Admin role cannot be changed.');
+      this.loadUsers(); // Revert UI
+      return;
+    }
+
+    if (!confirm(`Are you sure you want to change ${user.email}'s role to ${newRole}?`)) {
+      // Reset the select if cancelled (this is a simple hydration reset in Angular without full form control binding)
+      // In a real app we'd trigger a change detection cycle or reset the model.
+      // For now, the confirm blocks the change so the model might look updated until refresh.
+      // But since we catch the event before backend update, we can reload.
+      this.loadUsers();
+      return;
+    }
     try {
       const session = await fetchAuthSession();
       const token = session.tokens?.accessToken?.toString();
       const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
       this.http.put(`http://localhost:3000/users/${user.id}/role`, { role: newRole }, { headers }).subscribe({
-        next: () => { user.role = newRole; alert('Role updated!'); },
-        error: (e) => console.error(e)
+        next: () => {
+          user.role = newRole;
+          // Brainy: No alert needed, just works.
+        },
+        error: (e) => {
+          console.error(e);
+          alert('Failed to update role');
+          this.loadUsers(); // Revert on error
+        }
       });
     } catch (e) { }
   }
@@ -1205,7 +1353,7 @@ export class DashboardComponent implements OnInit {
     // TODO: Call backend delete
   }
 
-  selectTimeRange(range: 'today' | '7d' | '30d') {
+  selectTimeRange(range: '7d' | '30d' | '90d') {
     this.timeRange = range;
     // Update the executive pulse data based on selection
     // We use Object.assign to keep reference or just direct assignment
