@@ -464,7 +464,7 @@ const MOCK_CUSTOMERS = REAL_NAMES.map((name, i) => ({
                           <h2>System Users</h2>
                           <button (click)="loadUsers()" class="btn-clean">↻ Refresh</button>
                       </div>
-                      <table class="data-table">
+                      <table class="data-table user-layout">
                          <thead>
                             <tr><th>User</th><th>Role</th><th>Change Role</th><th>Credits</th><th class="text-right">Actions</th></tr>
                          </thead>
@@ -502,7 +502,7 @@ const MOCK_CUSTOMERS = REAL_NAMES.map((name, i) => ({
                           <h2>Customer Directory</h2>
                           <input type="text" placeholder="Search..." class="search-box">
                       </div>
-                      <table class="data-table hover-rows">
+                      <table class="data-table customer-layout hover-rows">
                          <thead>
                             <tr><th>Customer</th><th>Role</th><th>Joined</th><th>Total Books</th><th>Credits</th><th>Status</th></tr>
                          </thead>
@@ -752,13 +752,22 @@ const MOCK_CUSTOMERS = REAL_NAMES.map((name, i) => ({
     .badge.SUPER_ADMIN { background: #fee2e2; color: #991b1b; }
     .badge.USER { background: #f3f4f6; color: #374151; }
     .role-select { padding: 4px 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.85rem; width: 100%; }
-    .data-table th:nth-child(1) { width: 25%; } /* Customer */
-    .data-table th:nth-child(2) { width: 15%; } /* Profile */
-    .data-table th:nth-child(3) { width: 8%; }  /* Books */
-    .data-table th:nth-child(4) { width: 20%; } /* Type */
-    .data-table th:nth-child(5) { width: 12%; } /* Voices */
-    .data-table th:nth-child(6) { width: 10%; } /* Credits */
-    .data-table th:nth-child(7) { width: 10%; text-align: right; } /* Actions */
+    
+    /* SPECIFIC TABLE VISUALS */
+    .user-layout th:nth-child(1) { width: 35%; }
+    .user-layout th:nth-child(2) { width: 15%; }
+    .user-layout th:nth-child(3) { width: 25%; }
+    .user-layout th:nth-child(4) { width: 10%; }
+    .user-layout th:nth-child(5) { width: 15%; text-align: right; }
+
+    .customer-layout th:nth-child(1) { width: 30%; }
+    .customer-layout th:nth-child(2) { width: 15%; }
+    .customer-layout th:nth-child(3) { width: 15%; }
+    .customer-layout th:nth-child(4) { width: 15%; }
+    .customer-layout th:nth-child(5) { width: 10%; }
+    .customer-layout th:nth-child(6) { width: 15%; }
+    
+    .data-table td { padding: 12px 8px; border-top: 1px solid #f3f4f6; vertical-align: middle; }
 
     .user-cell { display: flex; align-items: center; gap: 12px; }
     .avatar-sm { width: 32px; height: 32px; background: #e0e7ff; color: #4f46e5; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; }
