@@ -16,6 +16,7 @@ const MOCK_PULSE_DATA = {
   salesMix: {
     nameBook: { count: 450, rev: '$13,500' },
 
+
     storyMaker: { count: 240, rev: '$8,400' }, // Higher tier
     addons: { count: 153, rev: '$2,602' },
     insights: [
@@ -46,9 +47,11 @@ const MOCK_PULSE_DATA = {
   engagement: {
     booksCreated: 1024,
     newVersions: 312,
-    aiNarrations: 56, // Low? 
+    cyaPaths: 89,
+    aiNarrations: 56,
     manualRecordings: 12,
-    saveSlotsUsed: '45%'
+    saveSlotsUsed: '45%',
+    creditsSpent: 420
   },
   alerts: [
     { level: 'critical', msg: '5 Chargebacks need review', action: 'Review' },
@@ -62,19 +65,22 @@ const MOCK_VARIANTS = {
     revenue: { total: '$1,204', net: '$950', growth: '+2.1%', trend: 'up' },
     orders: { count: 32, aov: '$37.60', perDay: 32, trend: 'up' },
     customers: { new: 12, returning: 8, storyMakerAdoption: '28%' },
-    redFlags: { refunds: 0, chargebacks: 0, failedPayments: 1 }
+    redFlags: { refunds: 0, chargebacks: 0, failedPayments: 1 },
+    engagement: { booksCreated: 45, newVersions: 12, cyaPaths: 4, aiNarrations: 3, manualRecordings: 1, saveSlotsUsed: '45%', creditsSpent: 20 }
   },
   '7d': {
     revenue: { total: '$8,450', net: '$7,100', growth: '+12%', trend: 'up' },
     orders: { count: 215, aov: '$39.20', perDay: 30, trend: 'up' },
     customers: { new: 85, returning: 42, storyMakerAdoption: '35%' },
-    redFlags: { refunds: 2, chargebacks: 1, failedPayments: 3 }
+    redFlags: { refunds: 2, chargebacks: 1, failedPayments: 3 },
+    engagement: { booksCreated: 320, newVersions: 98, cyaPaths: 25, aiNarrations: 18, manualRecordings: 5, saveSlotsUsed: '46%', creditsSpent: 150 }
   },
   '30d': {
     revenue: { total: '$24,502', net: '$21,005', growth: '+8%', trend: 'up' },
     orders: { count: 843, aov: '$29.00', perDay: 28, trend: 'down' },
     customers: { new: 612, returning: 231, storyMakerAdoption: '34%' },
-    redFlags: { refunds: 5, chargebacks: 1, failedPayments: 3 }
+    redFlags: { refunds: 5, chargebacks: 1, failedPayments: 3 },
+    engagement: { booksCreated: 1024, newVersions: 312, cyaPaths: 89, aiNarrations: 56, manualRecordings: 12, saveSlotsUsed: '45%', creditsSpent: 420 }
   }
 };
 
@@ -184,11 +190,16 @@ const MOCK_CUSTOMERS = REAL_NAMES.map((name, i) => ({
                       </div>
                       <div class="snapshot-grid">
                           <!-- Revenue -->
-                          <div class="kpi-card">
+                          <div class="kpi-card" *ngIf="role !== 'MARKETING'">
                               <div class="kpi-label">Gross Revenue</div>
                               <div class="kpi-value">{{ pulse.executive.revenue.total }}</div>
-                              <div class="kpi-sub">Net: {{ pulse.executive.revenue.net }}</div>
+                              <div class="kpi-sub">Net (post-fees): {{ pulse.executive.revenue.net }}</div>
                               <div class="trend up">{{ pulse.executive.revenue.growth }}</div>
+                          </div>
+                          <div class="kpi-card" *ngIf="role === 'MARKETING'">
+                              <div class="kpi-label">Revenue</div>
+                              <div class="kpi-value text-blur">HIDDEN</div>
+                              <div class="kpi-sub">View Restricted</div>
                           </div>
                           <!-- Orders -->
                           <div class="kpi-card">
@@ -385,24 +396,35 @@ const MOCK_CUSTOMERS = REAL_NAMES.map((name, i) => ({
 
                   <!-- SECTION 4: ENGAGEMENT (Churn Watch) -->
                   <div class="section-container">
-                      <div class="section-header"><h2>Engagement Signals</h2></div>
+                      <div class="section-header"><h2>Customer Activity & Engagement</h2></div>
                       <div class="engagement-grid">
                           <div class="eng-item">
                               <span class="eng-val">{{ pulse.engagement.booksCreated }}</span>
                               <span class="eng-label">Books Created</span>
                           </div>
                           <div class="eng-item">
-                              <span class="eng-val">{{ pulse.engagement.aiNarrations }}</span>
-                              <span class="eng-label">AI Narrations</span>
-                              <span class="eng-trend down">Low Usage</span>
+                              <span class="eng-val">{{ pulse.engagement.newVersions }}</span>
+                              <span class="eng-label">Versions Created</span>
                           </div>
                           <div class="eng-item">
-                              <span class="eng-val">{{ pulse.engagement.saveSlotsUsed }}</span>
-                              <span class="eng-label">Save Slot Usage</span>
+                              <span class="eng-val">{{ pulse.engagement.cyaPaths }}</span>
+                              <span class="eng-label">CYA Paths</span>
+                          </div>
+                          <div class="eng-item">
+                              <span class="eng-val">{{ pulse.engagement.aiNarrations }}</span>
+                              <span class="eng-label">AI Narrations</span>
                           </div>
                           <div class="eng-item">
                               <span class="eng-val">{{ pulse.engagement.manualRecordings }}</span>
                               <span class="eng-label">Manual Voice</span>
+                          </div>
+                          <div class="eng-item">
+                              <span class="eng-val">{{ pulse.engagement.saveSlotsUsed }}</span>
+                              <span class="eng-label">Slot Usage</span>
+                          </div>
+                          <div class="eng-item">
+                              <span class="eng-val">{{ pulse.engagement.creditsSpent }}</span>
+                              <span class="eng-label">Credits Spent</span>
                           </div>
                       </div>
                       <div class="alert-banner warn mt-4">
@@ -451,12 +473,13 @@ const MOCK_CUSTOMERS = REAL_NAMES.map((name, i) => ({
                                <td><div class="font-bold">{{ user.email }}</div><small>{{ user.id }}</small></td>
                                <td><span class="badge" [ngClass]="user.role">{{ user.role }}</span></td>
                                <td>
-                                  <select (change)="updateRole(user, $any($event.target).value)" [value]="user.role" class="role-select">
+                                  <select (change)="updateRole(user, $any($event.target).value)" [value]="user.role" class="role-select mini mt-1">
                                      <option value="USER" *ngIf="user.role === 'USER'">User</option>
                                      <option value="SUPER_ADMIN">Super Admin</option>
                                      <option value="FINANCE_ADMIN">Finance Admin</option>
                                      <option value="OPS_ADMIN">Ops Admin</option>
                                      <option value="DEVELOPER">Developer</option>
+                                     <option value="MARKETING">Marketing</option>
                                      <option value="SUPPORT">Support</option>
                                   </select>
                                </td>
@@ -676,15 +699,15 @@ const MOCK_CUSTOMERS = REAL_NAMES.map((name, i) => ({
     .conversion-rate { margin-top: 12px; font-size: 0.9rem; color: #374151; }
 
     /* GRAPHS ROW */
-    .graphs-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-    .graph-box h3 { font-size: 0.85rem; color: #6b7280; margin-bottom: 16px; font-weight: 600; text-transform: uppercase; }
-    .svg-chart-container { width: 100%; height: 200px; position: relative; }
+    .graphs-row { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 40px; align-items: start; }
+    .graph-box h3 { font-size: 0.85rem; color: #6b7280; margin-bottom: 24px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+    .svg-chart-container { width: 100%; height: 220px; position: relative; margin-bottom: 10px; }
     .line-chart { width: 100%; height: 100%; overflow: visible; }
-    .chart-labels { display: flex; justify-content: space-between; margin-top: 8px; font-size: 0.7rem; color: #9ca3af; }
+    .chart-labels { display: flex; justify-content: space-between; margin-top: 16px; font-size: 0.75rem; color: #6b7280; font-weight: 500; padding: 0 10px; }
     
-    .pie-layout { display: flex; align-items: center; gap: 24px; }
-    .pie-chart { width: 140px; height: 140px; border-radius: 50%; border: 1px solid #e5e7eb; }
-    .pie-legend { display: flex; flex-direction: column; gap: 8px; }
+    .pie-layout { display: flex; align-items: center; gap: 24px; height: 220px; }
+    .pie-chart { width: 160px; height: 160px; border-radius: 50%; border: 4px solid white; box-shadow: 0 0 0 1px #e5e7eb; flex-shrink: 0; }
+    .pie-legend { display: flex; flex-direction: column; gap: 12px; }
     .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: #4b5563; }
     .dot { width: 10px; height: 10px; border-radius: 50%; }
 
@@ -703,14 +726,14 @@ const MOCK_CUSTOMERS = REAL_NAMES.map((name, i) => ({
     .dev-bar { height: 100%; background: #4f46e5; border-radius: 6px; }
     .dev-pct { width: 40px; text-align: right; font-weight: 700; color: #111827; }
 
-    /* ENGAGEMENT */
-    .engagement-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .eng-item { background: #f9fafb; padding: 12px; border-radius: 8px; text-align: center; }
     .eng-val { display: block; font-size: 1.2rem; font-weight: 700; color: #111827; }
     .eng-label { font-size: 0.75rem; color: #6b7280; }
     .eng-trend.down { color: #dc2626; font-size: 0.7rem; display: block; }
     .alert-banner { padding: 8px; border-radius: 6px; font-size: 0.8rem; font-weight: 500; text-align: center; }
     .alert-banner.warn { background: #fff7ed; color: #ea580c; border: 1px solid #fdba74; }
+    .engagement-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .text-blur { filter: blur(4px); user-select: none; opacity: 0.5; }
 
     /* ALERTS LIST */
     .alerts-list { display: flex; flex-direction: column; gap: 8px; }
@@ -857,7 +880,7 @@ export class DashboardComponent implements OnInit {
       this.http.get<any>('http://localhost:3000/users/me', { headers }).subscribe({
         next: (data) => {
           this.role = data.role;
-          this.isInternal = ['SUPER_ADMIN', 'FINANCE_ADMIN', 'OPS_ADMIN', 'DEVELOPER', 'SUPPORT'].includes(this.role);
+          this.isInternal = ['SUPER_ADMIN', 'FINANCE_ADMIN', 'OPS_ADMIN', 'DEVELOPER', 'SUPPORT', 'MARKETING'].includes(this.role);
 
           // If internal, default to Pulse. If user, default to Books.
           if (this.isInternal) this.view = 'PULSE'; else this.view = 'BOOKS';
@@ -914,6 +937,10 @@ export class DashboardComponent implements OnInit {
     // Update the executive pulse data based on selection
     // We use Object.assign to keep reference or just direct assignment
     this.pulse.executive = { ...MOCK_VARIANTS[range] };
+    // Also update engagement if variant exists for it, otherwise keep default
+    if ((MOCK_VARIANTS[range] as any).engagement) {
+      this.pulse.engagement = { ...(MOCK_VARIANTS[range] as any).engagement };
+    }
   }
 
   openCustomer(cust: any) {
