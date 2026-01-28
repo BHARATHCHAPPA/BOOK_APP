@@ -113,6 +113,45 @@ const MOCK_CUSTOMERS = REAL_NAMES.map((name, i) => ({
   ]
 }));
 
+const MOCK_NOTIFICATIONS = [
+  {
+    id: 1,
+    user: 'Terry Franci',
+    avatar: 'https://i.pravatar.cc/150?u=1',
+    msg: 'requests permission to change Project - Nganter App',
+    project: 'Project',
+    time: '5 min ago',
+    unread: true
+  },
+  {
+    id: 2,
+    user: 'Alena Franci',
+    avatar: 'https://i.pravatar.cc/150?u=2',
+    msg: 'requests permission to change Project - Nganter App',
+    project: 'Project',
+    time: '8 min ago',
+    unread: true
+  },
+  {
+    id: 3,
+    user: 'Jocelyn Kenter',
+    avatar: 'https://i.pravatar.cc/150?u=3',
+    msg: 'requests permission to change Project - Nganter App',
+    project: 'Project',
+    time: '15 min ago',
+    unread: false
+  },
+  {
+    id: 4,
+    user: 'Brandon Philips',
+    avatar: 'https://i.pravatar.cc/150?u=4',
+    msg: 'requests permission to change Project - Nganter App',
+    project: 'Project',
+    time: '1 hr ago',
+    unread: false
+  }
+];
+
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -166,8 +205,82 @@ const MOCK_CUSTOMERS = REAL_NAMES.map((name, i) => ({
                   <span *ngIf="loading" class="loading-badge">Syncing...</span>
               </div>
               <div class="header-right">
-                 <span class="role-badge" [class.admin]="isInternal">{{ role }}</span>
-                 <div class="avatar">{{ userEmail.charAt(0).toUpperCase() }}</div>
+                 <button class="icon-btn" (click)="toggleTheme()" title="Toggle Theme">
+                    <svg *ngIf="!isDarkMode" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="svg-icon">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
+                    </svg>
+                    <svg *ngIf="isDarkMode" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="svg-icon">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" />
+                    </svg>
+                 </button>
+                 <div class="notification-wrapper">
+                     <button class="icon-btn relative" (click)="showNotifications = !showNotifications; showProfileMenu = false" title="Notifications">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="svg-icon">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
+                        </svg>
+                        <span class="badge-dot" *ngIf="hasUnreadNotifications()"></span>
+                     </button>
+                     
+                     <!-- NOTIFICATION DROPDOWN -->
+                     <div class="notification-popup" *ngIf="showNotifications">
+                         <div class="notif-header">
+                             <h3>Notifications</h3>
+                             <button class="close-btn" (click)="showNotifications = false">✕</button>
+                         </div>
+                         <div class="notif-list">
+                             <div class="notif-item" *ngFor="let n of notifications">
+                                 <div class="notif-avatar">
+                                     <img [src]="n.avatar" alt="User">
+                                     <div class="status-dot" *ngIf="n.unread"></div>
+                                 </div>
+                                 <div class="notif-content">
+                                     <p class="notif-text"><strong>{{ n.user }}</strong> {{ n.msg }}</p>
+                                     <div class="notif-meta">
+                                         <span class="project-tag">{{ n.project }}</span>
+                                         <span class="time-dot">•</span>
+                                         <span class="time-ago">{{ n.time }}</span>
+                                     </div>
+                                 </div>
+                             </div>
+                         </div>
+                         <div class="notif-footer">
+                             <button class="view-all-btn">View All Notifications</button>
+                         </div>
+                     </div>
+                 </div>
+                 
+                 <div class="profile-section">
+                     <div class="profile-trigger" (click)="showProfileMenu = !showProfileMenu; showNotifications = false">
+                        <div class="avatar-circle">{{ userEmail.charAt(0).toUpperCase() }}</div>
+                        <span class="user-name-display">{{ userEmail.split('@')[0] }}</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="svg-icon-sm">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                        </svg>
+                     </div>
+
+                     <!-- DROPDOWN MENU -->
+                     <div class="profile-dropdown" *ngIf="showProfileMenu">
+                         <div class="dropdown-header-info">
+                             <div class="dd-name">{{ userEmail.split('@')[0] }}</div>
+                             <div class="dd-email">{{ userEmail }}</div>
+                         </div>
+                         <div class="dropdown-list">
+                             <div class="dd-item" (click)="view = 'PROFILE'; showProfileMenu = false">
+                                 <span class="dd-icon">👤</span> Edit profile
+                             </div>
+                             <div class="dd-item">
+                                 <span class="dd-icon">⚙️</span> Account settings
+                             </div>
+                             <div class="dd-item">
+                                 <span class="dd-icon">ℹ️</span> Support
+                             </div>
+                             <div class="dd-divider"></div>
+                             <div class="dd-item" (click)="onLogout()">
+                                 <span class="dd-icon">⬅️</span> Sign out
+                             </div>
+                         </div>
+                     </div>
+                 </div>
               </div>
           </header>
 
@@ -182,10 +295,38 @@ const MOCK_CUSTOMERS = REAL_NAMES.map((name, i) => ({
                   <div class="section-container full-width">
                       <div class="section-header">
                           <h2>Executive Snapshot</h2>
-                          <div class="time-toggle">
-                              <span (click)="selectTimeRange('today')" [class.active]="timeRange === 'today'">Today</span>
-                              <span (click)="selectTimeRange('7d')" [class.active]="timeRange === '7d'">7d</span>
-                              <span (click)="selectTimeRange('30d')" [class.active]="timeRange === '30d'">30d</span>
+                          <div class="range-toolbar">
+                             <div class="range-group">
+                                 <button class="range-btn" (click)="selectTimeRange('today')" [class.active]="timeRange === 'today'">Monthly</button>
+                                 <button class="range-btn" (click)="selectTimeRange('7d')" [class.active]="timeRange === '7d'">Quarterly</button>
+                                 <button class="range-btn" (click)="selectTimeRange('30d')" [class.active]="timeRange === '30d'">Annually</button>
+                             </div>
+                             <div class="date-picker-trigger relative" (click)="showCalendar = !showCalendar">
+                                 <span class="calendar-icon">📅</span>
+                                 <span>Jan 21 to Jan 27</span>
+                                 <div class="calendar-popup" *ngIf="showCalendar" (click)="$event.stopPropagation()">
+                                     <div class="cal-header">
+                                         <button class="cal-nav">&lt;</button>
+                                         <span>January 2026</span>
+                                         <button class="cal-nav">&gt;</button>
+                                     </div>
+                                     <div class="cal-grid">
+                                         <div class="cal-day-head">Sun</div><div class="cal-day-head">Mon</div><div class="cal-day-head">Tue</div><div class="cal-day-head">Wed</div><div class="cal-day-head">Thu</div><div class="cal-day-head">Fri</div><div class="cal-day-head">Sat</div>
+                                         
+                                         <!-- Mock Days -->
+                                         <div class="cal-day dim">28</div><div class="cal-day dim">29</div><div class="cal-day dim">30</div>
+                                         <div class="cal-day">1</div><div class="cal-day">2</div><div class="cal-day">3</div><div class="cal-day">4</div>
+                                         <div class="cal-day">5</div><div class="cal-day">6</div><div class="cal-day">7</div><div class="cal-day">8</div><div class="cal-day">9</div><div class="cal-day">10</div><div class="cal-day">11</div>
+                                         <div class="cal-day">12</div><div class="cal-day">13</div><div class="cal-day">14</div><div class="cal-day">15</div><div class="cal-day">16</div><div class="cal-day">17</div><div class="cal-day">18</div>
+                                         <div class="cal-day">19</div><div class="cal-day">20</div><div class="cal-day range-start">21</div><div class="cal-day range-mid">22</div><div class="cal-day range-mid">23</div><div class="cal-day range-mid">24</div><div class="cal-day range-mid">25</div>
+                                         <div class="cal-day range-mid">26</div><div class="cal-day range-end">27</div><div class="cal-day">28</div><div class="cal-day">29</div><div class="cal-day">30</div><div class="cal-day">31</div>
+                                     </div>
+                                     <div class="cal-footer">
+                                         <button class="btn-clean small" (click)="showCalendar = false">Cancel</button>
+                                         <button class="btn-primary small" (click)="showCalendar = false">Apply</button>
+                                     </div>
+                                 </div>
+                             </div>
                           </div>
                       </div>
                       <div class="snapshot-grid">
@@ -466,24 +607,11 @@ const MOCK_CUSTOMERS = REAL_NAMES.map((name, i) => ({
                       </div>
                       <table class="data-table user-layout">
                          <thead>
-                            <tr><th>User</th><th>Role</th><th>Change Role</th><th>Credits</th><th class="text-right">Actions</th></tr>
+                            <tr><th>User</th><th class="text-right">Actions</th></tr>
                          </thead>
                          <tbody>
                             <tr *ngFor="let user of users">
-                               <td><div class="font-bold">{{ user.email }}</div><small>{{ user.id }}</small></td>
-                               <td><span class="badge" [ngClass]="user.role">{{ user.role }}</span></td>
-                               <td>
-                                  <select (change)="updateRole(user, $any($event.target).value)" [value]="user.role" class="role-select mini mt-1">
-                                     <option value="USER" *ngIf="user.role === 'USER'">User</option>
-                                     <option value="SUPER_ADMIN">Super Admin</option>
-                                     <option value="FINANCE_ADMIN">Finance Admin</option>
-                                     <option value="OPS_ADMIN">Ops Admin</option>
-                                     <option value="DEVELOPER">Developer</option>
-                                     <option value="MARKETING">Marketing</option>
-                                     <option value="SUPPORT">Support</option>
-                                  </select>
-                               </td>
-                               <td>{{ user.role === 'SUPER_ADMIN' ? '' : (user.credits || 0) }}</td>
+                               <td><div class="font-bold">{{ user.email }}</div><span class="badge" [ngClass]="user.role">{{ user.role }}</span></td>
                                <td class="text-right">
                                   <button (click)="deleteUser(user)" class="btn-icon">🗑️</button>
                                </td>
@@ -504,7 +632,7 @@ const MOCK_CUSTOMERS = REAL_NAMES.map((name, i) => ({
                       </div>
                       <table class="data-table customer-layout hover-rows">
                          <thead>
-                            <tr><th>Customer</th><th>Role</th><th>Joined</th><th>Total Books</th><th>Credits</th><th>Status</th></tr>
+                            <tr><th>Customer</th><th>Joined</th><th>Total Books</th><th>Credits</th><th>Status</th></tr>
                          </thead>
                          <tbody>
                             <tr *ngFor="let cust of mockCustomers" (click)="openCustomer(cust)" style="cursor: pointer">
@@ -517,7 +645,6 @@ const MOCK_CUSTOMERS = REAL_NAMES.map((name, i) => ({
                                        </div>
                                    </div>
                                </td>
-                               <td><span class="badge" [class.success]="cust.role === 'Premium'">{{ cust.role }}</span></td>
                                <td>{{ cust.joined }}</td>
                                <td>{{ cust.books.length }}</td>
                                <td>{{ cust.credits }}</td>
@@ -631,15 +758,53 @@ const MOCK_CUSTOMERS = REAL_NAMES.map((name, i) => ({
     </div>
   `,
   styles: [`
-    /* GLOBAL RESET */
-    :host { display: block; height: 100vh; overflow: hidden; font-family: 'Inter', sans-serif; color: #1f2937; background: #f3f4f6; }
+    /* GLOBAL RESET & VARIABLES */
+    :host { 
+        display: block; 
+        height: 100vh; 
+        overflow: hidden; 
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        
+        /* Light Theme (Default) */
+        --bg-app: #f3f4f6;
+        --bg-sidebar: #ffffff;
+        --bg-card: #ffffff;
+        --text-main: #111827;
+        --text-muted: #6b7280;
+        --border-color: #e5e7eb;
+        --hover-bg: #f9fafb;
+        --primary: #4f46e5;
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+    
+    :host.dark-theme {
+        /* Dark Theme Overrides */
+        --bg-app: #0f172a;
+        --bg-sidebar: #1e293b;
+        --bg-card: #1e293b;
+        --text-main: #f8fafc;
+        --text-muted: #94a3b8;
+        --border-color: #334155;
+        --hover-bg: #334155;
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+    }
+
+    :host { color: var(--text-main); background: var(--bg-app); transition: background 0.3s ease, color 0.3s ease; }
     * { box-sizing: border-box; }
 
     /* LAYOUT GRID */
     .app-layout { display: flex; height: 100%; }
-    .sidebar { width: 280px; background: white; border-right: 1px solid #e5e7eb; display: flex; flex-direction: column; flex-shrink: 0; }
+    /* LAYOUT GRID */
+    .app-layout { display: flex; height: 100%; }
+    .sidebar { width: 280px; background: var(--bg-sidebar); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; flex-shrink: 0; transition: background 0.3s, border-color 0.3s; }
     .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
-    .content-scroll { flex: 1; overflow-y: auto; padding: 24px; background: #f3f4f6; } /* Grey bg */
+    .content-scroll { flex: 1; overflow-y: auto; padding: 24px; background: var(--bg-app); }
     
     /* DASHBOARD GRID SYSTEM */
     .dashboard-grid { 
@@ -653,21 +818,48 @@ const MOCK_CUSTOMERS = REAL_NAMES.map((name, i) => ({
     @media (max-width: 1000px) { .dashboard-grid { grid-template-columns: 1fr; } .full-width { grid-column: span 1; } }
 
     /* SECTION CONTAINERS */
-    .section-container { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid #e5e7eb; }
-    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #f3f4f6; padding-bottom: 12px; }
-    .time-toggle { background: #f3f4f6; padding: 4px; border-radius: 8px; display: flex; gap: 4px; }
-    .time-toggle span { font-size: 0.75rem; color: #6b7280; padding: 4px 12px; border-radius: 6px; cursor: pointer; font-weight: 500; transition: all 0.2s; }
+    .section-container { background: var(--bg-card); border-radius: 12px; padding: 20px; box-shadow: var(--shadow); border: 1px solid var(--border-color); transition: background 0.3s, border-color 0.3s; }
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--hover-bg); padding-bottom: 12px; }
+    /* RANGE TOOLBAR */
+    .range-toolbar { display: flex; align-items: center; gap: 12px; }
+    .range-group { display: flex; background: #f3f4f6; padding: 4px; border-radius: 8px; gap: 4px; }
+    .range-btn { border: none; background: transparent; padding: 6px 16px; font-size: 0.8rem; font-weight: 600; color: #6b7280; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
+    .range-btn:hover { background: rgba(0,0,0,0.05); color: #374151; }
+    .range-btn.active { background: white; color: #111827; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+    
+    .date-picker-trigger { display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: #f3f4f6; border-radius: 8px; font-size: 0.85rem; font-weight: 600; color: #374151; cursor: pointer; position: relative; border: 1px solid transparent; }
+    .date-picker-trigger:hover { border-color: #d1d5db; }
+    .calendar-icon { font-size: 1rem; }
+
+    /* CALENDAR POPUP */
+    .calendar-popup { position: absolute; top: 110%; right: 0; background: #1e293b; color: white; padding: 16px; border-radius: 12px; width: 320px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3); z-index: 100; font-family: 'Inter', sans-serif; }
+    .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; font-weight: 600; }
+    .cal-nav { background: transparent; border: 1px solid #475569; color: white; border-radius: 4px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; margin-bottom: 16px; }
+    .cal-day-head { font-size: 0.7rem; color: #94a3b8; padding-bottom: 8px; font-weight: 600; }
+    .cal-day { font-size: 0.8rem; padding: 6px; border-radius: 4px; cursor: pointer; color: #e2e8f0; }
+    .cal-day:hover { background: #334155; }
+    .cal-day.dim { color: #475569; }
+    .cal-day.range-start { background: #4f46e5; color: white; border-radius: 4px 0 0 4px; }
+    .cal-day.range-mid { background: rgba(79, 70, 229, 0.3); border-radius: 0; }
+    .cal-day.range-end { background: #4f46e5; color: white; border-radius: 0 4px 4px 0; }
+    
+    .cal-footer { display: flex; justify-content: flex-end; gap: 8px; padding-top: 12px; border-top: 1px solid #334155; }
+    .btn-clean.small { font-size: 0.75rem; padding: 4px 10px; border-color: #475569; color: white; background: transparent; }
+    .btn-clean.small:hover { background: #334155; }
+    .btn-primary.small { font-size: 0.75rem; padding: 4px 12px; margin-top: 0; }
+
     .time-toggle span:hover { background: #e5e7eb; color: #374151; }
     .time-toggle span.active { background: white; color: #4f46e5; box-shadow: 0 1px 2px rgba(0,0,0,0.05); font-weight: 600; }
     h2 { font-size: 1rem; font-weight: 700; color: #374151; margin: 0; text-transform: uppercase; letter-spacing: 0.05em; }
 
     /* SNAPSHOT */
     .snapshot-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
-    .kpi-card { background: #f9fafb; padding: 16px; border-radius: 8px; border: 1px solid #e5e7eb; position: relative; }
-    .kpi-card.danger-border { border-left: 4px solid #ef4444; background: #fef2f2; }
-    .kpi-label { font-size: 0.75rem; font-weight: 600; color: #6b7280; text-transform: uppercase; }
-    .kpi-value { font-size: 1.5rem; font-weight: 800; color: #111827; margin: 4px 0; }
-    .kpi-sub { font-size: 0.75rem; color: #9ca3af; }
+    .kpi-card { background: var(--bg-card); padding: 16px; border-radius: 8px; border: 1px solid var(--border-color); position: relative; }
+    .kpi-card.danger-border { border-left: 4px solid #ef4444; background: rgba(254, 242, 242, 0.1); }
+    .kpi-label { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
+    .kpi-value { font-size: 1.5rem; font-weight: 800; color: var(--text-main); margin: 4px 0; }
+    .kpi-sub { font-size: 0.75rem; color: var(--text-muted); }
     .trend { display: inline-block; font-size: 0.7rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; margin-top: 4px; }
     .trend.up { background: #ecfdf5; color: #059669; }
     .text-red { color: #dc2626; }
@@ -682,21 +874,30 @@ const MOCK_CUSTOMERS = REAL_NAMES.map((name, i) => ({
     .mix-bar.highlight { background: #4f46e5; }
     .mix-bar.addon { background: #10b981; }
     .mix-val { width: 40px; text-align: right; font-weight: 600; }
-    .mix-rev { width: 60px; text-align: right; color: #6b7280; }
-    .insight-box { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 6px; padding: 12px; }
-    .insight-item { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px; }
+    .mix-rev { width: 60px; text-align: right; color: var(--text-muted); }
+    
+    .insight-box { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px; padding: 12px; }
+    :host.dark-theme .insight-box { background: rgba(120, 53, 15, 0.1); border-color: rgba(245, 158, 11, 0.2); }
+    
+    .insight-item { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px; color: #92400e; }
+    :host.dark-theme .insight-item { color: #fcd34d; }
 
     /* FUNNEL */
     .funnel-viz { display: flex; flex-direction: column; align-items: center; }
     .funnel-step { width: 100%; display: flex; flex-direction: column; align-items: center; }
-    .step-box { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; font-weight: 600; padding: 8px; border-radius: 6px; text-align: center; margin-bottom: 4px; }
+    .step-box { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; font-weight: 600; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 4px; box-shadow: var(--shadow-sm); }
+    :host.dark-theme .step-box { background: rgba(30, 58, 138, 0.2); border-color: rgba(30, 58, 138, 0.4); color: #93c5fd; }
+    
     .step-box.wide { width: 100%; }
     .step-box.medium { width: 70%; }
     .step-box.narrow { width: 40%; }
     .step-box.success { background: #ecfdf5; border-color: #6ee7b7; color: #047857; }
+    :host.dark-theme .step-box.success { background: rgba(6, 95, 70, 0.2); border-color: rgba(6, 95, 70, 0.4); color: #6ee7b7; }
+    
     .funnel-connector { font-size: 1.2rem; color: #9ca3af; line-height: 1; margin: 4px 0; }
-    .abandon-stat { font-size: 0.75rem; color: #dc2626; font-weight: 600; }
-    .conversion-rate { margin-top: 12px; font-size: 0.9rem; color: #374151; }
+    .abandon-stat { font-size: 0.75rem; color: #ef4444; font-weight: 600; margin-top: 2px; }
+    .conversion-rate { margin-top: 12px; font-size: 0.9rem; color: var(--text-muted); }
+    :host.dark-theme .conversion-rate { color: #94a3b8; }
 
     /* GRAPHS ROW */
     .graphs-row { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 40px; align-items: start; }
@@ -754,18 +955,14 @@ const MOCK_CUSTOMERS = REAL_NAMES.map((name, i) => ({
     .role-select { padding: 4px 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.85rem; width: 100%; }
     
     /* SPECIFIC TABLE VISUALS */
-    .user-layout th:nth-child(1) { width: 35%; }
-    .user-layout th:nth-child(2) { width: 15%; }
-    .user-layout th:nth-child(3) { width: 25%; }
-    .user-layout th:nth-child(4) { width: 10%; }
-    .user-layout th:nth-child(5) { width: 15%; text-align: right; }
+    .user-layout th:nth-child(1) { width: 90%; }
+    .user-layout th:nth-child(2) { width: 10%; text-align: right; }
 
-    .customer-layout th:nth-child(1) { width: 30%; }
-    .customer-layout th:nth-child(2) { width: 15%; }
+    .customer-layout th:nth-child(1) { width: 35%; }
+    .customer-layout th:nth-child(2) { width: 20%; }
     .customer-layout th:nth-child(3) { width: 15%; }
     .customer-layout th:nth-child(4) { width: 15%; }
-    .customer-layout th:nth-child(5) { width: 10%; }
-    .customer-layout th:nth-child(6) { width: 15%; }
+    .customer-layout th:nth-child(5) { width: 15%; }
     
     .data-table td { padding: 12px 8px; border-top: 1px solid #f3f4f6; vertical-align: middle; }
 
@@ -806,8 +1003,9 @@ const MOCK_CUSTOMERS = REAL_NAMES.map((name, i) => ({
     .nav-item.active { background: #eef2ff; color: #4f46e5; font-weight: 600; }
     .icon { width: 22px; text-align: center; }
     .badge-count { background: #ef4444; color: white; font-size: 0.65rem; padding: 2px 6px; border-radius: 12px; margin-left: auto; }
-    .sidebar-footer { padding: 16px; border-top: 1px solid #eee; text-align: center; font-size: 0.8rem; color: #9ca3af; }
-    .logout-btn { width: 100%; padding: 8px; background: white; border: 1px solid #fecaca; color: #dc2626; border-radius: 6px; margin-bottom: 8px; cursor: pointer; }
+    .sidebar-footer { padding: 16px; border-top: 1px solid var(--border-color); text-align: center; font-size: 0.8rem; color: var(--text-muted); }
+    .logout-btn { width: 100%; padding: 8px; background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); border-radius: 8px; margin-bottom: 8px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .logout-btn:hover { background: rgba(239, 68, 68, 0.1); color: #ef4444; border-color: #ef4444; }
 
     .top-header { height: 60px; background: white; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; padding: 0 24px; }
     .header-left h1 { font-size: 1.1rem; font-weight: 700; margin: 0; }
@@ -817,7 +1015,64 @@ const MOCK_CUSTOMERS = REAL_NAMES.map((name, i) => ({
     .header-right { display: flex; align-items: center; gap: 12px; }
     .role-badge { font-size: 0.8rem; font-weight: 500; color: #6b7280; }
     .role-badge.admin { color: #dc2626; background: #fef2f2; padding: 2px 8px; rounded: 4px; }
+    .role-badge { font-size: 0.8rem; font-weight: 500; color: #6b7280; }
+    .role-badge.admin { color: #dc2626; background: #fef2f2; padding: 2px 8px; rounded: 4px; }
     .avatar { width: 32px; height: 32px; background: #4f46e5; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+    
+    /* HEADER RIGHT & DROPDOWN */
+    .header-right { display: flex; align-items: center; gap: 20px; position: relative; }
+    .icon-btn { background: transparent; border: 1px solid transparent; cursor: pointer; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--text-muted); transition: all 0.2s; }
+    .icon-btn:hover { background: var(--bg-app); color: var(--text-main); border-color: var(--border-color); box-shadow: var(--shadow-sm); }
+    .svg-icon { width: 24px; height: 24px; }
+    .svg-icon-sm { width: 16px; height: 16px; color: var(--text-muted); }
+    
+    .profile-trigger { display: flex; align-items: center; gap: 10px; padding: 6px 12px; border-radius: 30px; cursor: pointer; transition: all 0.2s; user-select: none; border: 1px solid transparent; }
+    .profile-trigger:hover { background: var(--bg-app); border-color: var(--border-color); box-shadow: var(--shadow-sm); }
+    .avatar-circle { width: 36px; height: 36px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1rem; box-shadow: 0 2px 4px rgba(79, 70, 229, 0.3); }
+    .user-name-display { font-weight: 600; font-size: 0.95rem; color: var(--text-main); }
+    
+    .profile-dropdown { position: absolute; top: calc(100% + 12px); right: 0; width: 260px; background: var(--bg-card); border-radius: 16px; box-shadow: var(--shadow-lg); border: 1px solid var(--border-color); z-index: 50; overflow: hidden; animation: slideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
+    @keyframes slideDown { from { opacity: 0; transform: translateY(-10px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    
+    .dropdown-header-info { padding: 20px; border-bottom: 1px solid var(--border-color); background: var(--hover-bg); }
+    .dd-name { font-weight: 700; color: var(--text-main); font-size: 1rem; }
+    .dd-email { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; }
+    
+    .dropdown-list { padding: 8px; }
+    .dd-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; font-size: 0.9rem; color: var(--text-main); cursor: pointer; border-radius: 10px; transition: all 0.2s; font-weight: 500; }
+    .dd-item:hover { background: var(--hover-bg); color: var(--primary); }
+    .dd-icon { font-size: 1.2rem; width: 24px; text-align: center; opacity: 0.8; }
+    .dd-divider { height: 1px; background: var(--border-color); margin: 8px 16px; opacity: 0.5; }
+    
+    /* NOTIFICATION POPUP */
+    .notification-popup { position: absolute; top: calc(100% + 14px); right: -60px; width: 380px; background: #1f2937; border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4); z-index: 101; overflow: hidden; color: white; animation: slideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1); border: 1px solid rgba(255,255,255,0.1); font-family: 'Inter', sans-serif; }
+    :host.dark-theme .notification-popup { background: var(--bg-card); border-color: var(--border-color); }
+    
+    .notification-popup::before { content: ''; position: absolute; top: -6px; right: 74px; width: 12px; height: 12px; background: #1f2937; transform: rotate(45deg); border-left: 1px solid rgba(255,255,255,0.1); border-top: 1px solid rgba(255,255,255,0.1); }
+    :host.dark-theme .notification-popup::before { background: var(--bg-card); border-color: var(--border-color); }
+    
+    .notif-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .notif-header h3 { margin: 0; font-size: 1rem; font-weight: 600; color: white; }
+    .close-btn { background: transparent; border: none; color: #9ca3af; font-size: 1.2rem; cursor: pointer; padding: 4px; }
+    .close-btn:hover { color: white; }
+    
+    .notif-list { max-height: 400px; overflow-y: auto; padding: 8px; }
+    .notif-item { display: flex; gap: 12px; padding: 12px; border-radius: 12px; cursor: pointer; transition: background 0.2s; }
+    .notif-item:hover { background: rgba(255,255,255,0.1); }
+    .notif-avatar { position: relative; width: 40px; height: 40px; flex-shrink: 0; }
+    .notif-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+    .status-dot { position: absolute; bottom: 0; right: 0; width: 10px; height: 10px; background: #ef4444; border: 2px solid #1f2937; border-radius: 50%; }
+    
+    .notif-content { flex: 1; font-size: 0.85rem; }
+    .notif-text { margin: 0 0 4px 0; line-height: 1.4; color: #e5e7eb; }
+    .notif-text strong { color: white; font-weight: 600; }
+    .notif-meta { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: #9ca3af; }
+    .project-tag { color: #d1d5db; font-weight: 500; }
+    
+    .notif-footer { padding: 12px; border-top: 1px solid rgba(255,255,255,0.1); }
+    .view-all-btn { width: 100%; background: #374151; border: none; color: #e5e7eb; padding: 10px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+    .view-all-btn:hover { background: #4b5563; }
+
     
     .fade-in { animation: fadeIn 0.3s ease-out; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
@@ -832,8 +1087,12 @@ const MOCK_CUSTOMERS = REAL_NAMES.map((name, i) => ({
     .prop-row label { width: 100px; color: #6b7280; font-weight: 500; }
     .mono { font-family: monospace; }
     .text-right { text-align: right; }
-    .font-bold { font-weight: 700; }
-  `]
+
+
+  `],
+  host: {
+    '[class.dark-theme]': 'isDarkMode'
+  }
 })
 export class DashboardComponent implements OnInit {
   view: 'PULSE' | 'USERS' | 'CUSTOMERS' | 'CUSTOMER_DETAIL' | 'BOOKS' | 'PROFILE' | 'ALERTS' = 'BOOKS';
@@ -843,10 +1102,15 @@ export class DashboardComponent implements OnInit {
   userId = '';
   pulse = MOCK_PULSE_DATA; // Start with mock, then we can bind real data later
   mockCustomers = MOCK_CUSTOMERS;
+  notifications = MOCK_NOTIFICATIONS;
   selectedCustomer: any = null;
   timeRange: 'today' | '7d' | '30d' = '30d'; /* Default to 30d to match initial data */
   users: any[] = [];
   loading = false;
+  showProfileMenu = false;
+  showNotifications = false;
+  showCalendar = false;
+  isDarkMode = false;
 
   constructor(
     private router: Router,
@@ -955,5 +1219,13 @@ export class DashboardComponent implements OnInit {
   openCustomer(cust: any) {
     this.selectedCustomer = cust;
     this.view = 'CUSTOMER_DETAIL';
+  }
+
+  toggleTheme() {
+    this.isDarkMode = !this.isDarkMode;
+  }
+
+  hasUnreadNotifications() {
+    return this.notifications.some(n => n.unread);
   }
 }
