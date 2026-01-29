@@ -97,16 +97,16 @@ const MOCK_CUSTOMERS = REAL_NAMES.map((name, i) => ({
   role: i % 4 === 0 ? 'Premium' : 'Standard',
   joined: new Date(2023, i, 15).toLocaleDateString(),
   credits: (i * 15) + 5,
-  profileScore: Math.floor(Math.random() * 40) + 60,
+  childProfileCount: Math.floor(Math.random() * 3) + 1,
   avatar: name.charAt(0),
   books: [
-    { title: 'The Lost World', adventure: 'Fiction', created: '2023-11-01', length: '4h 12m' },
-    { title: 'My Memoirs', adventure: 'Biography', created: '2024-01-15', length: '6h 30m' },
-    ...(i % 2 === 0 ? [{ title: 'Bedtime Stories', adventure: 'Children', created: '2024-02-10', length: '20m' }] : [])
+    { title: 'The Lost World', type: 'Adventure', created: '2023-11-01', length: '4h 12m' },
+    { title: 'My Memoirs', type: 'Name', created: '2024-01-15', length: '6h 30m' },
+    ...(i % 2 === 0 ? [{ title: 'Bedtime Stories', type: 'Adventure', created: '2024-02-10', length: '20m' }] : [])
   ],
   voices: [
-    { name: i % 2 === 0 ? 'Siri' : 'Alexa', type: 'AI Voice', status: 'Active' },
-    ...(i % 3 === 0 ? [{ name: 'Grandma', type: 'AI Voice', status: 'Processing' }] : [])
+    { name: i % 2 === 0 ? 'Siri' : 'Alexa', type: 'AI Voice' },
+    ...(i % 3 === 0 ? [{ name: 'Grandma', type: 'Clone' }] : [])
   ],
   transactions: [
     { date: '2024-01-15', desc: 'Gift Card', amount: '$49.00' },
@@ -397,7 +397,16 @@ const MOCK_NOTIFICATIONS = [
 
                   <!-- SECTION 2: SALES & PRODUCT MIX -->
                   <div class="section-container">
-                      <div class="section-header"><h2>Sales & Product Mix</h2></div>
+                      <div class="section-header">
+                          <h2>Sales & Product Mix</h2>
+                          <div class="range-toolbar mini">
+                               <div class="range-group">
+                                   <button class="range-btn" (click)="selectTimeRange('7d')" [class.active]="timeRange === '7d'">7d</button>
+                                   <button class="range-btn" (click)="selectTimeRange('30d')" [class.active]="timeRange === '30d'">30d</button>
+                                   <button class="range-btn" (click)="selectTimeRange('90d')" [class.active]="timeRange === '90d'">90d</button>
+                               </div>
+                          </div>
+                      </div>
                       <div class="mix-content">
                           <div class="mix-row">
                               <span class="mix-name">Name Book (T1)</span>
@@ -435,7 +444,16 @@ const MOCK_NOTIFICATIONS = [
 
                   <!-- SECTION 3: FUNNEL HEALTH -->
                   <div class="section-container">
-                      <div class="section-header"><h2>Funnel Health</h2></div>
+                      <div class="section-header">
+                          <h2>Funnel Health</h2>
+                          <div class="range-toolbar mini">
+                               <div class="range-group">
+                                   <button class="range-btn" (click)="selectTimeRange('7d')" [class.active]="timeRange === '7d'">7d</button>
+                                   <button class="range-btn" (click)="selectTimeRange('30d')" [class.active]="timeRange === '30d'">30d</button>
+                                   <button class="range-btn" (click)="selectTimeRange('90d')" [class.active]="timeRange === '90d'">90d</button>
+                               </div>
+                          </div>
+                      </div>
                       <div class="funnel-viz">
                           <div class="funnel-step">
                               <div class="step-box wide">Visitors: {{ pulse.funnel.visitors }}</div>
@@ -457,7 +475,16 @@ const MOCK_NOTIFICATIONS = [
 
                   <!-- NOVELTY: GROWTH TRENDS (NEW GRAPHS) -->
                   <div class="section-container full-width">
-                      <div class="section-header"><h2>Growth Trends</h2></div>
+                      <div class="section-header">
+                          <h2>Growth Trends</h2>
+                          <div class="range-toolbar mini">
+                               <div class="range-group">
+                                   <button class="range-btn" (click)="selectTimeRange('7d')" [class.active]="timeRange === '7d'">7d</button>
+                                   <button class="range-btn" (click)="selectTimeRange('30d')" [class.active]="timeRange === '30d'">30d</button>
+                                   <button class="range-btn" (click)="selectTimeRange('90d')" [class.active]="timeRange === '90d'">90d</button>
+                               </div>
+                          </div>
+                      </div>
                       <div class="graphs-row">
                           
                           <!-- SVG Line Chart -->
@@ -518,7 +545,16 @@ const MOCK_NOTIFICATIONS = [
                   </div>
 
                   <div class="section-container full-width">
-                      <div class="section-header"><h2>Additional Metrics</h2></div>
+                      <div class="section-header">
+                          <h2>Additional Metrics</h2>
+                          <div class="range-toolbar mini">
+                               <div class="range-group">
+                                   <button class="range-btn" (click)="selectTimeRange('7d')" [class.active]="timeRange === '7d'">7d</button>
+                                   <button class="range-btn" (click)="selectTimeRange('30d')" [class.active]="timeRange === '30d'">30d</button>
+                                   <button class="range-btn" (click)="selectTimeRange('90d')" [class.active]="timeRange === '90d'">90d</button>
+                               </div>
+                          </div>
+                      </div>
                       <div class="graphs-row">
                           <!-- Bar Chart: User Growth -->
                           <div class="graph-box">
@@ -560,7 +596,16 @@ const MOCK_NOTIFICATIONS = [
 
                   <!-- SECTION 4: ENGAGEMENT (Churn Watch) -->
                   <div class="section-container">
-                      <div class="section-header"><h2>Customer Activity & Engagement</h2></div>
+                      <div class="section-header">
+                          <h2>Customer Activity & Engagement</h2>
+                          <div class="range-toolbar mini">
+                               <div class="range-group">
+                                   <button class="range-btn" (click)="selectTimeRange('7d')" [class.active]="timeRange === '7d'">7d</button>
+                                   <button class="range-btn" (click)="selectTimeRange('30d')" [class.active]="timeRange === '30d'">30d</button>
+                                   <button class="range-btn" (click)="selectTimeRange('90d')" [class.active]="timeRange === '90d'">90d</button>
+                               </div>
+                          </div>
+                      </div>
                       <div class="engagement-grid">
                           <div class="eng-item">
                               <span class="eng-val">{{ pulse.engagement.booksCreated }}</span>
@@ -656,11 +701,12 @@ const MOCK_NOTIFICATIONS = [
                                      </div>
                                  </td>
                                  <td class="text-right">
-                                    <button (click)="deleteUser(user)" class="icon-btn-sm danger" title="Delete User">
+                                    <button *ngIf="user.role !== 'SUPER_ADMIN' && user.email !== 'chappabharath1999@gmail.com'" (click)="deleteUser(user)" class="icon-btn-sm danger" title="Delete User">
                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="svg-icon-xs">
                                          <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
                                        </svg>
                                     </button>
+                                    <span *ngIf="user.role === 'SUPER_ADMIN' || user.email === 'chappabharath1999@gmail.com'" class="text-xs text-gray-500 italic">Protected</span>
                                  </td>
                               </tr>
                           </tbody>
@@ -679,10 +725,19 @@ const MOCK_NOTIFICATIONS = [
                       </div>
                       <table class="data-table customer-layout hover-rows">
                           <thead>
-                             <tr><th>Customer</th><th>Joined</th><th>Total Books</th><th>Credits</th><th>Profile</th><th></th></tr>
+                             <tr>
+                                 <th style="width: 50px; text-align: center;">#</th>
+                                 <th>Customer</th>
+                                 <th>Joined</th>
+                                 <th>Total Books</th>
+                                 <th>Credits</th>
+                                 <th>Child Profile</th>
+                                 <th></th>
+                             </tr>
                           </thead>
                          <tbody>
-                            <tr *ngFor="let cust of mockCustomers" (click)="openCustomer(cust)" style="cursor: pointer">
+                            <tr *ngFor="let cust of mockCustomers; let i = index" (click)="openCustomer(cust)" style="cursor: pointer">
+                               <td style="text-align: center;"><span class="text-gray font-bold">{{ i + 1 }}</span></td>
                                <td>
                                    <div class="user-cell">
                                        <div class="avatar-sm">{{ cust.avatar }}</div>
@@ -695,7 +750,7 @@ const MOCK_NOTIFICATIONS = [
                                <td>{{ cust.joined }}</td>
                                <td>{{ cust.books.length }}</td>
                                <td>{{ cust.credits }}</td>
-                                <td><span class="dot" style="background: #10b981"></span> {{ cust.profileScore }}%</td>
+                                <td>{{ cust.childProfileCount }} {{ cust.childProfileCount === 1 ? 'Profile' : 'Profiles' }}</td>
                                 <td>
                                     <button class="icon-btn-sm" (click)="$event.stopPropagation(); openCustomer(cust)" title="Edit Customer">
                                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="svg-icon-xs">
@@ -743,11 +798,11 @@ const MOCK_NOTIFICATIONS = [
                             </h2>
                           </div>
                           <table class="data-table">
-                              <thead><tr><th>Title</th><th>Adventure</th><th>Created</th></tr></thead>
+                              <thead><tr><th>Title</th><th>Type</th><th>Created</th></tr></thead>
                               <tbody>
                                   <tr *ngFor="let b of selectedCustomer.books">
                                       <td class="font-bold">{{ b.title }}</td>
-                                      <td><span class="tag">{{ b.adventure }}</span></td>
+                                      <td><span class="tag">{{ b.type }}</span></td>
                                       <td>{{ b.created }}</td>
                                   </tr>
                               </tbody>
@@ -765,12 +820,11 @@ const MOCK_NOTIFICATIONS = [
                             </h2>
                           </div>
                           <table class="data-table">
-                              <thead><tr><th>Name</th><th>Type</th><th>Status</th></tr></thead>
+                              <thead><tr><th>Name</th><th>Type</th></tr></thead>
                               <tbody>
                                   <tr *ngFor="let v of selectedCustomer.voices">
                                       <td class="font-bold">{{ v.name }}</td>
                                       <td>{{ v.type }}</td>
-                                      <td><span class="badge success">Active</span></td>
                                   </tr>
                               </tbody>
                           </table>
@@ -1037,11 +1091,12 @@ const MOCK_NOTIFICATIONS = [
     .user-layout th:nth-child(1) { width: 90%; }
     .user-layout th:nth-child(2) { width: 10%; text-align: right; }
 
-    .customer-layout th:nth-child(1) { width: 35%; }
-    .customer-layout th:nth-child(2) { width: 20%; }
-    .customer-layout th:nth-child(3) { width: 15%; }
-    .customer-layout th:nth-child(4) { width: 15%; }
-    .customer-layout th:nth-child(5) { width: 15%; }
+    .customer-layout th:nth-child(1) { width: 50px; } /* # */
+    .customer-layout th:nth-child(2) { width: 30%; } /* Customer */
+    .customer-layout th:nth-child(3) { width: 15%; } /* Joined */
+    .customer-layout th:nth-child(4) { width: 15%; } /* Books */
+    .customer-layout th:nth-child(5) { width: 15%; } /* Credits */
+    .customer-layout th:nth-child(6) { width: 15%; } /* Child Profile */
     
     .data-table td { padding: 12px 8px; border-top: 1px solid #f3f4f6; vertical-align: middle; }
 
@@ -1173,7 +1228,7 @@ const MOCK_NOTIFICATIONS = [
     .prop-row { display: flex; border-bottom: 1px solid #eee; padding: 12px 0; }
     .prop-row label { width: 100px; color: #6b7280; font-weight: 500; }
     .mono { font-family: monospace; }
-    .text-right { text-align: right; }
+    .text-right { text-align: right !important; }
     
     /* SYSTEM USER TABLE */
     .user-info-cell { display: flex; align-items: center; justify-content: space-between; gap: 12px; }

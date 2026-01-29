@@ -94,6 +94,16 @@ export async function userRoutes(fastify: FastifyInstance) {
             return reply.status(403).send({ error: 'Access Denied: Admins Only' });
         }
 
+        const targetUser = await userRepo.findById(id);
+        if (!targetUser) {
+            return reply.status(404).send({ error: 'User not found' });
+        }
+
+        // STRICTLY PREVENT DELETION OF SUPER ADMINS
+        if (targetUser.role === UserRole.SUPER_ADMIN || targetUser.email === 'chappabharath1999@gmail.com') {
+            return reply.status(403).send({ error: 'Operation Denied: Cannot delete a Super Admin account.' });
+        }
+
         await (userRepo as any).delete(id);
         return { success: true, message: `User ${id} deleted` };
     });
