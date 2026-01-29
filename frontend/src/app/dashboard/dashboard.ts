@@ -1394,12 +1394,8 @@ export class DashboardComponent implements OnInit {
           this.cdr.detectChanges();
         },
         error: () => {
-          // FALLBACK FOR DEV/NO-BACKEND: Assume Super Admin to show UI
-          console.warn('Backend unreachable. Falling back to Mock Super Admin mode.');
-          this.role = 'SUPER_ADMIN';
-          this.isInternal = true;
-          this.view = 'PULSE';
-          this.cdr.detectChanges();
+          this.role = 'USER';
+          this.view = 'BOOKS';
         }
       });
     } catch (e) { }
@@ -1420,18 +1416,7 @@ export class DashboardComponent implements OnInit {
 
       this.http.get<any[]>('http://localhost:3000/users', { headers }).subscribe({
         next: (data) => { this.users = data; this.loading = false; this.cdr.detectChanges(); },
-        error: () => {
-          this.loading = false;
-          // Mock Users for Dev
-          this.users = [
-            { id: 'm1', email: 'founder@bravesoup.com', role: 'SUPER_ADMIN' },
-            { id: 'm2', email: 'tech@bravesoup.com', role: 'DEVELOPER' },
-            { id: 'm3', email: 'ops@bravesoup.com', role: 'OPS_ADMIN' },
-            { id: 'm4', email: 'marketing@bravesoup.com', role: 'MARKETING' },
-            { id: 'm5', email: 'support@bravesoup.com', role: 'SUPPORT' }
-          ];
-          this.cdr.detectChanges();
-        }
+        error: () => { this.loading = false; }
       });
     } catch (e) { this.loading = false; }
   }
