@@ -22,6 +22,12 @@ export class LoginComponent {
   isLoading = false;
   errorMessage = '';
 
+  // Modal State
+  showModal = false;
+  modalTitle = '';
+  modalMessage = '';
+  modalType: 'SUCCESS' | 'ERROR' = 'SUCCESS';
+
   constructor(
     private router: Router,
     private ngZone: NgZone,
@@ -35,21 +41,58 @@ export class LoginComponent {
     this.cdr.detectChanges(); // Manually trigger change detection
   }
 
-  async onSubmit() {
-    this.isLoading = true;
-    this.errorMessage = '';
+  showAlert(title: string, message: string, type: 'SUCCESS' | 'ERROR') {
+    this.modalTitle = title;
+    this.modalMessage = message;
+    this.modalType = type;
+    this.showModal = true;
+    this.cdr.detectChanges();
+  }
 
+  closeModal() {
+    this.showModal = false;
+  }
+
+  validateInput(): boolean {
+    // 1. Check Empty
     if (!this.email) {
-      this.errorMessage = 'Please enter your email.';
-      this.isLoading = false;
-      return;
+      this.showAlert('Missing Email', 'Please enter your email address.', 'ERROR');
+      return false;
     }
 
-    if (this.mode !== 'FORGOT' && !this.password) {
-      this.errorMessage = 'Please enter your password.';
-      this.isLoading = false;
-      return;
+    // 2. Format Check (Simple Regex)
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(this.email)) {
+      this.showAlert('Invalid Email', 'Please enter a valid email address (e.g., user@example.com).', 'ERROR');
+      return false;
     }
+
+    // 3. Password Check (if required by mode)
+    if (this.mode !== 'FORGOT') {
+      if (!this.password) {
+        this.showAlert('Missing Password', 'Please enter your password.', 'ERROR');
+        return false;
+      }
+      if (this.mode === 'SIGNUP') {
+        const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\^$*.[\]{}()?"!@#%&/\\,><':;|_~`+=-]).{8,}$/;
+        if (!strongPasswordRegex.test(this.password)) {
+          this.showAlert(
+            'Weak Password',
+            'Password must meet all requirements:\n• At least 8 characters\n• 1 Uppercase Letter\n• 1 Lowercase Letter\n• 1 Number\n• 1 Special Character',
+            'ERROR'
+          );
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  async onSubmit() {
+    this.errorMessage = ''; // Clear old banner if any
+    if (!this.validateInput()) return;
+
+    this.isLoading = true;
 
     try {
       if (this.mode === 'LOGIN') {
@@ -63,8 +106,10 @@ export class LoginComponent {
       console.error('Auth Error:', error);
       this.ngZone.run(() => {
         this.handleAuthError(error);
-        this.isLoading = false;
       });
+    } finally {
+      this.isLoading = false; // Always stop loader
+      this.cdr.detectChanges();
     }
   }
 
@@ -80,8 +125,7 @@ export class LoginComponent {
       } else if (result.nextStep?.signInStep === 'CONFIRM_SIGN_UP') {
         this.step = 'OTP';
         this.mode = 'SIGNUP';
-        this.errorMessage = 'Please verify your email to continue.';
-        this.isLoading = false;
+        this.showAlert('Verification Needed', 'Please verify your email to continue.', 'SUCCESS');
 
         import('aws-amplify/auth').then(auth =>
           auth.resendSignUpCode({ username: this.email })
@@ -99,8 +143,7 @@ export class LoginComponent {
         options: { userAttributes: { email: this.email } }
       });
       this.step = 'OTP';
-      this.isLoading = false;
-      this.cdr.detectChanges();
+      this.showAlert('Account Created', 'Please check your email for the verification code.', 'SUCCESS');
     } catch (error: any) {
       if (error.name === 'UsernameExistsException') {
         console.log('User exists, attempting to resend code...');
@@ -108,16 +151,14 @@ export class LoginComponent {
           const { resendSignUpCode } = await import('aws-amplify/auth');
           await resendSignUpCode({ username: this.email });
           this.step = 'OTP';
-          this.isLoading = false;
-          this.errorMessage = 'Account exists but was not verified. A new code has been sent.';
-          this.cdr.detectChanges();
+          this.showAlert('Account Exists', 'Account exists but was not verified. A new code has been sent.', 'SUCCESS');
           return;
         } catch (resendError: any) {
-          // If resend fails (e.g. user is actually CONFIRMED), let the original error flow handle it
           console.error('Resend failed:', resendError);
+          // Fall through to re-throw original error if resend fails
         }
       }
-      throw error; // Re-throw to main handler if not recoverable
+      throw error;
     }
   }
 
@@ -125,17 +166,21 @@ export class LoginComponent {
     await resetPassword({ username: this.email });
     this.ngZone.run(() => {
       this.step = 'OTP';
-      this.isLoading = false;
-      this.cdr.detectChanges(); // Ensure UI switches to OTP view
+      this.showAlert('Code Sent', 'Check your email for the password reset code.', 'SUCCESS');
     });
   }
 
   async onVerifyOtp() {
+    if (!this.otp) {
+      this.showAlert('Missing Code', 'Please enter the verification code.', 'ERROR');
+      return;
+    }
+
     this.isLoading = true;
     this.errorMessage = '';
 
     if (this.mode === 'FORGOT' && !this.password) {
-      this.errorMessage = 'Please set a new password.';
+      this.showAlert('Missing Password', 'Please set a new password.', 'ERROR');
       this.isLoading = false;
       return;
     }
@@ -167,18 +212,23 @@ export class LoginComponent {
     } catch (error: any) {
       this.ngZone.run(() => {
         this.handleAuthError(error);
-        this.isLoading = false;
       });
+    } finally {
+      this.isLoading = false;
+      this.cdr.detectChanges();
     }
   }
 
   async onResendCode() {
     try {
+      this.isLoading = true;
       const { resendSignUpCode } = await import('aws-amplify/auth');
       await resendSignUpCode({ username: this.email });
-      alert('Code resent successfully!');
+      this.showAlert('Success', 'Code resent successfully!', 'SUCCESS');
     } catch (error: any) {
-      this.errorMessage = error.message;
+      this.handleAuthError(error);
+    } finally {
+      this.isLoading = false;
     }
   }
 
@@ -186,13 +236,14 @@ export class LoginComponent {
     if (error.name === 'UserNotConfirmedException' || (error.message && error.message.includes('not confirmed'))) {
       this.step = 'OTP';
       this.mode = 'SIGNUP';
-      this.errorMessage = 'Account not verified. We sent a new code.';
+      this.showAlert('Not Verified', 'Account not verified. We sent a new code.', 'ERROR');
 
       import('aws-amplify/auth').then(auth =>
         auth.resendSignUpCode({ username: this.email })
       );
     } else {
-      this.errorMessage = error.message || 'An unexpected error occurred.';
+      const msg = error.message || 'An unexpected error occurred.';
+      this.showAlert('Authentication Error', msg, 'ERROR');
     }
   }
 }

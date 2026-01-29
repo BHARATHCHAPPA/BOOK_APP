@@ -91,9 +91,17 @@
             </div>
         </div>
 
-        <!-- Error Banner -->
-        <div *ngIf="errorMessage" class="error-banner animate-shake">
-            {{ errorMessage }}
+        <!-- CUSTOM MODAL -->
+        <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+            <div class="modal-box" (click)="$event.stopPropagation()">
+                <span class="modal-icon">
+                    {{ modalType === 'SUCCESS' ? '✅' : '⚠️' }}
+                </span>
+                <div class="modal-title">{{ modalTitle }}</div>
+                <div class="modal-text">{{ modalMessage }}</div>
+                <button class="modal-btn" [class.error-btn]="modalType === 'ERROR'" (click)="closeModal()">
+                    {{ modalType === 'SUCCESS' ? 'Continue' : 'Try Again' }}
+                </button>
+            </div>
         </div>
     </div>
-</div>
