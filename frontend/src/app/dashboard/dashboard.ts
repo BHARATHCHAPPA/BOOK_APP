@@ -1174,6 +1174,8 @@ const MOCK_NOTIFICATIONS = [
     
     /* HEADER RIGHT & DROPDOWN */
     .header-right { display: flex; align-items: center; gap: 20px; position: relative; }
+    .notification-wrapper { position: relative; height: 40px; width: 40px; display: flex; align-items: center; justify-content: center; }
+
     .icon-btn { background: transparent; border: 1px solid transparent; cursor: pointer; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--text-muted); transition: all 0.2s; }
     .icon-btn:hover { background: var(--bg-app); color: var(--text-main); border-color: var(--border-color); box-shadow: var(--shadow-sm); }
     .svg-icon { width: 24px; height: 24px; }
@@ -1184,7 +1186,7 @@ const MOCK_NOTIFICATIONS = [
     .avatar-circle { width: 36px; height: 36px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1rem; box-shadow: 0 2px 4px rgba(79, 70, 229, 0.3); }
     .user-name-display { font-weight: 600; font-size: 0.95rem; color: var(--text-main); }
     
-    .profile-dropdown { position: absolute; top: calc(100% + 12px); right: 0; width: 260px; background: var(--bg-card); border-radius: 16px; box-shadow: var(--shadow-lg); border: 1px solid var(--border-color); z-index: 50; overflow: hidden; animation: slideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
+    .profile-dropdown { position: absolute; top: calc(100% + 12px); right: 0; width: 260px; background: var(--bg-card); border-radius: 16px; box-shadow: var(--shadow-lg); border: 1px solid var(--border-color); z-index: 205; overflow: hidden; animation: slideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
     @keyframes slideDown { from { opacity: 0; transform: translateY(-10px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
     
     .dropdown-header-info { padding: 20px; border-bottom: 1px solid var(--border-color); background: var(--hover-bg); }
@@ -1196,18 +1198,21 @@ const MOCK_NOTIFICATIONS = [
     .dd-item:hover { background: var(--hover-bg); color: var(--primary); }
     .dd-icon { font-size: 1.2rem; width: 24px; text-align: center; opacity: 0.8; }
     .dd-divider { height: 1px; background: var(--border-color); margin: 8px 16px; opacity: 0.5; }
-    
+
     /* NOTIFICATION POPUP */
-    .notification-popup { position: absolute; top: calc(100% + 14px); right: -60px; width: 380px; background: #1f2937; border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4); z-index: 101; overflow: hidden; color: white; animation: slideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1); border: 1px solid rgba(255,255,255,0.1); font-family: 'Inter', sans-serif; }
+    .notification-popup { position: absolute; top: 48px !important; right: -170px; left: auto; margin: 0; width: 380px; background: #1f2937; border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4); z-index: 200; overflow: visible; color: white; animation: slideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1); border: 1px solid rgba(255,255,255,0.1); font-family: 'Inter', sans-serif; transform: none; }
     :host.dark-theme .notification-popup { background: var(--bg-card); border-color: var(--border-color); }
     
-    .notification-popup::before { content: ''; position: absolute; top: -6px; right: 74px; width: 12px; height: 12px; background: #1f2937; transform: rotate(45deg); border-left: 1px solid rgba(255,255,255,0.1); border-top: 1px solid rgba(255,255,255,0.1); }
+    .notification-popup::before { content: ''; position: absolute; top: -6px; left: 50%; right: auto; transform: translateX(-50%) rotate(45deg); width: 12px; height: 12px; background: #1f2937; border-left: 1px solid rgba(255,255,255,0.1); border-top: 1px solid rgba(255,255,255,0.1); z-index: 201; }
     :host.dark-theme .notification-popup::before { background: var(--bg-card); border-color: var(--border-color); }
     
-    .notif-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .notif-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); border-top-left-radius: 16px; border-top-right-radius: 16px; background: inherit; }
     .notif-header h3 { margin: 0; font-size: 1rem; font-weight: 600; color: white; }
+    :host.dark-theme .notif-header h3 { color: var(--text-main); }
+    
     .close-btn { background: transparent; border: none; color: #9ca3af; font-size: 1.2rem; cursor: pointer; padding: 4px; }
     .close-btn:hover { color: white; }
+    :host.dark-theme .close-btn:hover { color: var(--text-main); }
     
     .notif-list { max-height: 400px; overflow-y: auto; padding: 8px; }
     .notif-item { display: flex; gap: 12px; padding: 12px; border-radius: 12px; cursor: pointer; transition: background 0.2s; }
