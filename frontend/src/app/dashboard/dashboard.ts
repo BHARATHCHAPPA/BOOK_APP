@@ -879,6 +879,24 @@ const MOCK_NOTIFICATIONS = [
 
           </div>
       </main>
+      <!-- CUSTOM MODAL -->
+      <div class="modal-overlay" *ngIf="showModal" (click)="onModalCancel()">
+          <div class="modal-box" (click)="$event.stopPropagation()">
+              <span class="modal-icon">
+                  {{ modalTitle.includes('Error') || modalTitle.includes('Denied') || modalTitle.includes('Delete') ? '⚠️' : '✅' }}
+              </span>
+              <div class="modal-title">{{ modalTitle }}</div>
+              <div class="modal-text">{{ modalMessage }}</div>
+              
+              <div class="modal-actions">
+                  <button *ngIf="modalType === 'CONFIRM'" class="modal-btn cancel-btn" (click)="onModalCancel()">Cancel</button>
+                  <button class="modal-btn" [class.danger-btn]="modalTitle.includes('Delete')" (click)="onModalConfirm()">
+                      {{ modalType === 'CONFIRM' ? modalConfirmLabel : 'OK' }}
+                  </button>
+              </div>
+          </div>
+      </div>
+
     </div>
   `,
   styles: [`
@@ -1271,6 +1289,25 @@ const MOCK_NOTIFICATIONS = [
     :host.dark-theme .icon-btn-sm:hover { background: rgba(255, 255, 255, 0.1); }
     :host.dark-theme .icon-btn-sm.danger:hover { background: rgba(239, 68, 68, 0.2); }
 
+    /* Custom Modal (SweetAlert style) - Copied from Login */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; align-items: center; z-index: 2000; animation: fadeIn 0.3s ease-out; }
+    .modal-box { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2); text-align: center; max-width: 400px; width: 90%; animation: scaleUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative; font-family: 'Inter', sans-serif; }
+    .modal-icon { font-size: 3rem; margin-bottom: 15px; display: block; }
+    .modal-title { font-size: 1.5rem; font-weight: 700; color: #333; margin-bottom: 10px; }
+    .modal-text { font-size: 1rem; color: #666; margin-bottom: 25px; line-height: 1.5; }
+    .modal-actions { display: flex; gap: 12px; justify-content: center; }
+    .modal-btn { background: #4f46e5; color: white; border: none; padding: 10px 24px; font-size: 1rem; font-weight: 600; border-radius: 6px; cursor: pointer; transition: background 0.2s; outline: none; }
+    .modal-btn:hover { background: #4338ca; }
+    .modal-btn.cancel-btn { background: #e5e7eb; color: #374151; }
+    .modal-btn.cancel-btn:hover { background: #d1d5db; }
+    .modal-btn.danger-btn { background: #ef4444; color: white; }
+    .modal-btn.danger-btn:hover { background: #dc2626; }
+    
+    :host.dark-theme .modal-box { background: #1e293b; color: #e5e7eb; }
+    :host.dark-theme .modal-title { color: white; }
+    :host.dark-theme .modal-text { color: #9ca3af; }
+    :host.dark-theme .modal-btn.cancel-btn { background: #334155; color: #e5e7eb; }
+    :host.dark-theme .modal-btn.cancel-btn:hover { background: #475569; }
 
   `],
   host: {
@@ -1294,6 +1331,15 @@ export class DashboardComponent implements OnInit {
   showNotifications = false;
   showCalendar = false;
   isDarkMode = false;
+
+  // Modal State
+  showModal = false;
+  modalTitle = '';
+  modalMessage = '';
+  modalType: 'CONFIRM' | 'ALERT' = 'ALERT';
+  modalAction: (() => void) | null = null;
+  modalCancelAction: (() => void) | null = null;
+  modalConfirmLabel = 'Confirm';
 
   constructor(
     private router: Router,
@@ -1370,43 +1416,86 @@ export class DashboardComponent implements OnInit {
     } catch (e) { this.loading = false; }
   }
 
+  // MODAL LOGIC
+  showAlert(title: string, message: string) {
+    this.modalTitle = title;
+    this.modalMessage = message;
+    this.modalType = 'ALERT';
+    this.showModal = true;
+    this.modalAction = () => { this.showModal = false; };
+  }
+
+  showConfirm(title: string, message: string, onConfirm: () => void, onCancel?: () => void, confirmLabel = 'Confirm') {
+    this.modalTitle = title;
+    this.modalMessage = message;
+    this.modalType = 'CONFIRM';
+    this.modalAction = onConfirm;
+    this.modalCancelAction = onCancel || (() => { this.showModal = false; });
+    this.modalConfirmLabel = confirmLabel;
+    this.showModal = true;
+  }
+
+  onModalConfirm() {
+    if (this.modalAction) this.modalAction();
+    this.showModal = false;
+  }
+
+  onModalCancel() {
+    if (this.modalCancelAction) this.modalCancelAction();
+    this.showModal = false;
+  }
+
+
   async updateRole(user: any, newRole: string) {
     // Constraint: Super Admin role cannot be changed to ANY other role
     if (user.role === 'SUPER_ADMIN') {
-      alert('Action Denied: Super Admin role cannot be changed.');
+      this.showAlert('Action Denied', 'Super Admin role cannot be changed.');
       this.loadUsers(); // Revert UI
       return;
     }
 
-    if (!confirm(`Are you sure you want to change ${user.email}'s role to ${newRole}?`)) {
-      // Reset the select if cancelled (this is a simple hydration reset in Angular without full form control binding)
-      // In a real app we'd trigger a change detection cycle or reset the model.
-      // For now, the confirm blocks the change so the model might look updated until refresh.
-      // But since we catch the event before backend update, we can reload.
-      this.loadUsers();
-      return;
-    }
-    try {
-      const session = await fetchAuthSession();
-      const token = session.tokens?.accessToken?.toString();
-      const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
-      this.http.put(`http://localhost:3000/users/${user.id}/role`, { role: newRole }, { headers }).subscribe({
-        next: () => {
-          user.role = newRole;
-          // Brainy: No alert needed, just works.
-        },
-        error: (e) => {
-          console.error(e);
-          alert('Failed to update role');
-          this.loadUsers(); // Revert on error
-        }
-      });
-    } catch (e) { }
+    this.showConfirm(
+      'Change User Role?',
+      `Are you sure you want to change ${user.email}'s role to ${newRole}?`,
+      async () => {
+        // ACTION
+        try {
+          const session = await fetchAuthSession();
+          const token = session.tokens?.accessToken?.toString();
+          const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
+          this.http.put(`http://localhost:3000/users/${user.id}/role`, { role: newRole }, { headers }).subscribe({
+            next: () => {
+              user.role = newRole;
+              this.showAlert('Success', 'User role updated successfully.');
+            },
+            error: (e) => {
+              console.error(e);
+              this.showAlert('Error', 'Failed to update role.');
+              this.loadUsers();
+            }
+          });
+        } catch (e) { }
+      },
+      () => {
+        // CANCEL/REVERT
+        this.loadUsers();
+      },
+      'Yes, Change Role'
+    );
   }
+
   async deleteUser(user: any) {
-    if (!confirm(`Delete ${user.email}?`)) return;
-    this.users = this.users.filter(u => u.id !== user.id);
-    // TODO: Call backend delete
+    this.showConfirm(
+      'Delete User?',
+      `Are you sure you want to permanently delete ${user.email}? This action cannot be undone.`,
+      () => {
+        this.users = this.users.filter(u => u.id !== user.id);
+        this.showAlert('Deleted', `${user.email} has been removed.`);
+        // TODO: Call backend delete
+      },
+      undefined,
+      'Delete User'
+    );
   }
 
   selectTimeRange(range: '7d' | '30d' | '90d') {
