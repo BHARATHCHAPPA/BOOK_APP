@@ -4,8 +4,6 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { fetchAuthSession, signOut } from 'aws-amplify/auth';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { CognitoIdentityProviderClient, ListUsersCommand, AdminAddUserToGroupCommand, AdminDeleteUserCommand } from '@aws-sdk/client-cognito-identity-provider';
-import { environment } from '../../environments/environment';
 
 // --- MOCK DATA FOR BRAVESOUP PULSE ---
 const MOCK_PULSE_DATA = {
@@ -165,13 +163,95 @@ const MOCK_NOTIFICATIONS = [
 ];
 
 const MOCK_PAYMENTS = [
-  { id: 'PAY-8921', user: 'alice.johnson@example.com', amount: '$49.00', status: 'Success', date: 'Oct 24, 2023', method: 'Visa •••• 4242', type: 'Subscription' },
-  { id: 'PAY-8922', user: 'bob.smith@example.com', amount: '$29.00', status: 'Failed', date: 'Oct 23, 2023', method: 'Mastercard •••• 8821', type: 'One-time' },
-  { id: 'PAY-8923', user: 'charlie.davis@example.com', amount: '$99.00', status: 'Success', date: 'Oct 22, 2023', method: 'PayPal', type: 'Credits' },
-  { id: 'PAY-8924', user: 'diana.evans@example.com', amount: '$29.00', status: 'Refunded', date: 'Oct 21, 2023', method: 'Visa •••• 1234', type: 'One-time' },
-  { id: 'PAY-8925', user: 'ethan.harris@example.com', amount: '$149.00', status: 'Success', date: 'Oct 20, 2023', method: 'Amex •••• 0001', type: 'Annual Plan' },
-  { id: 'PAY-8926', user: 'fiona.clark@example.com', amount: '$15.00', status: 'Success', date: 'Oct 19, 2023', method: 'Visa •••• 9999', type: 'Credit Top-up' },
-  { id: 'PAY-8927', user: 'george.baker@example.com', amount: '$29.00', status: 'Cancelled', date: 'Oct 18, 2023', method: 'Visa •••• 4242', type: 'One-time' }
+  {
+    id: 'ch_3N5y...9Xy1',
+    customer: { email: 'alice.johnson@example.com', name: 'Alice Johnson', id: 'cus_N8a...' },
+    amount: { display: '$49.00', gross: 49.00, fee: 1.72, net: 47.28, currency: 'USD' },
+    status: 'succeeded',
+    date: 'Oct 24, 2023, 10:42 AM',
+    method: { brand: 'Visa', last4: '4242', type: 'card' },
+    type: 'Subscription',
+    description: 'Pro Plan - Monthly',
+    risk: 12
+  },
+  {
+    id: 'ch_3N5x...8Wz2',
+    customer: { email: 'bob.smith@example.com', name: 'Bob Smith', id: 'cus_K2b...' },
+    amount: { display: '$29.00', gross: 29.00, fee: 0.00, net: 0.00, currency: 'USD' },
+    status: 'failed',
+    date: 'Oct 23, 2023, 09:15 AM',
+    method: { brand: 'Mastercard', last4: '8821', type: 'card' },
+    type: 'One-time',
+    description: 'Gift Credit Pack',
+    risk: 65,
+    failureReason: 'insufficient_funds'
+  },
+  {
+    id: 'py_1M4v...7Vw3',
+    customer: { email: 'charlie.davis@example.com', name: 'Charlie Davis', id: 'cus_L9c...' },
+    amount: { display: '$99.00', gross: 99.00, fee: 3.20, net: 95.80, currency: 'USD' },
+    status: 'succeeded',
+    date: 'Oct 22, 2023, 02:30 PM',
+    method: { brand: 'PayPal', last4: '', type: 'paypal' },
+    type: 'Credits',
+    description: '1000 Credits Bundle',
+    risk: 2
+  },
+  {
+    id: 'ch_3N5u...6Uu4',
+    customer: { email: 'diana.evans@example.com', name: 'Diana Evans', id: 'cus_M5d...' },
+    amount: { display: '$29.00', gross: 29.00, fee: 1.14, net: 27.86, currency: 'USD' },
+    status: 'refunded',
+    date: 'Oct 21, 2023, 11:05 AM',
+    method: { brand: 'Visa', last4: '1234', type: 'card' },
+    type: 'One-time',
+    description: 'Story Add-on: Fantasy',
+    risk: 5
+  },
+  {
+    id: 'ch_3N5t...5Tt5',
+    customer: { email: 'ethan.harris@example.com', name: 'Ethan Harris', id: 'cus_J4e...' },
+    amount: { display: '$149.00', gross: 149.00, fee: 4.62, net: 144.38, currency: 'USD' },
+    status: 'succeeded',
+    date: 'Oct 20, 2023, 04:55 PM',
+    method: { brand: 'Amex', last4: '0001', type: 'card' },
+    type: 'Annual Plan',
+    description: 'Family Plan (Annual)',
+    risk: 0
+  },
+  {
+    id: 'ch_3N5s...4Ss6',
+    customer: { email: 'fiona.clark@example.com', name: 'Fiona Clark', id: 'cus_H3f...' },
+    amount: { display: '$15.00', gross: 15.00, fee: 1.00, net: 14.00, currency: 'USD' },
+    status: 'succeeded',
+    date: 'Oct 19, 2023, 01:20 PM',
+    method: { brand: 'Visa', last4: '9999', type: 'card' },
+    type: 'Credit Top-up',
+    description: '100 Credits',
+    risk: 18
+  },
+  {
+    id: 'ch_3N5r...3Rr7',
+    customer: { email: 'george.baker@example.com', name: 'George Baker', id: 'cus_G2g...' },
+    amount: { display: '$29.00', gross: 29.00, fee: 0.00, net: 0.00, currency: 'USD' },
+    status: 'cancelled',
+    date: 'Oct 18, 2023, 08:45 AM',
+    method: { brand: 'Visa', last4: '4242', type: 'card' },
+    type: 'One-time',
+    description: 'Pending Purchase',
+    risk: 10
+  },
+  {
+    id: 'ch_3N5q...2Qq8',
+    customer: { email: 'hannah.lewis@example.com', name: 'Hannah Lewis', id: 'cus_F1h...' },
+    amount: { display: '$599.00', gross: 599.00, fee: 18.20, net: 580.80, currency: 'USD' },
+    status: 'succeeded',
+    date: 'Oct 17, 2023, 03:10 PM',
+    method: { brand: 'Visa', last4: '1111', type: 'card' },
+    type: 'Enterprise',
+    description: 'School License (5 Seats)',
+    risk: 1
+  }
 ];
 
 @Component({
@@ -321,8 +401,8 @@ const MOCK_PAYMENTS = [
                           <table class="data-table">
                               <thead>
                                   <tr>
-                                      <th>Transaction ID</th>
-                                      <th>User</th>
+                                      <th>ID / Desc</th>
+                                      <th>Customer</th>
                                       <th>Date</th>
                                       <th>Amount</th>
                                       <th>Type</th>
@@ -332,17 +412,31 @@ const MOCK_PAYMENTS = [
                               </thead>
                               <tbody>
                                   <tr *ngFor="let p of payments">
-                                      <td class="mono">{{p.id}}</td>
-                                      <td>{{p.user}}</td>
-                                      <td>{{p.date}}</td>
-                                      <td style="font-weight:600;">{{p.amount}}</td>
-                                      <td><span class="badge-gray">{{p.type}}</span></td>
                                       <td>
-                                          <span class="status-badge success" *ngIf="p.status === 'Success'">Success</span>
-                                          <span class="status-badge error" *ngIf="p.status === 'Failed' || p.status === 'Cancelled'">{{p.status}}</span>
-                                          <span class="status-badge warning" *ngIf="p.status === 'Refunded'">Refunded</span>
+                                          <div class="mono" style="font-size:0.75rem; color:#6b7280;">{{p.id}}</div>
+                                          <div style="font-weight:500; font-size:0.85rem;">{{p.description}}</div>
                                       </td>
-                                      <td style="color:#6b7280; font-size:0.9rem;">{{p.method}}</td>
+                                      <td>
+                                          <div style="font-weight:500;">{{p.customer.name}}</div>
+                                          <div style="font-size:0.75rem; color:#6b7280;">{{p.customer.email}}</div>
+                                      </td>
+                                      <td class="text-sm">{{p.date}}</td>
+                                      <td>
+                                          <div style="font-weight:600;">{{p.amount.display}}</div>
+                                          <div style="font-size:0.7rem; color:#9ca3af;">Fee: $ {{ p.amount.fee }}</div>
+                                      </td>
+                                      <td><span class="badge-gray" style="font-size:0.7rem">{{p.type}}</span></td>
+                                      <td>
+                                          <span class="status-badge success" *ngIf="p.status === 'succeeded'">Succeeded</span>
+                                          <span class="status-badge error" *ngIf="p.status === 'failed'">Failed</span>
+                                          <span class="status-badge warning" *ngIf="p.status === 'refunded'">Refunded</span>
+                                          <span class="status-badge" style="background:#f3f4f6; color:#374151;" *ngIf="p.status === 'cancelled'">Cancelled</span>
+                                          <div *ngIf="p.status === 'failed'" style="font-size:0.65rem; color:#ef4444; margin-top:2px;">{{p.failureReason}}</div>
+                                      </td>
+                                      <td style="color:#6b7280; font-size:0.9rem;">
+                                          <span *ngIf="p.method.brand">{{p.method.brand}} •••• {{p.method.last4}}</span>
+                                          <span *ngIf="!p.method.brand">{{p.method.type}}</span>
+                                      </td>
                                   </tr>
                               </tbody>
                           </table>
@@ -1499,53 +1593,29 @@ export class DashboardComponent implements OnInit {
     this.loading = true;
     try {
       const session = await fetchAuthSession();
-      // Try to get credentials (requires Identity Pool)
-      const credentials = session.credentials;
+      const token = session.tokens?.accessToken?.toString();
+      const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
 
-      if (!credentials) {
-        this.loading = false;
-        this.showAlert('Configuration Error', 'No AWS Credentials found in session. To manage users from Frontend without backend, an AWS Identity Pool with Admin permissions is required.');
-        return;
-      }
-
-      const client = new CognitoIdentityProviderClient({
-        region: 'us-east-1',
-        credentials: {
-          accessKeyId: credentials.accessKeyId,
-          secretAccessKey: credentials.secretAccessKey,
-          sessionToken: credentials.sessionToken
+      this.http.get<any[]>('http://localhost:3000/users', { headers }).subscribe({
+        next: (data) => {
+          this.users = data;
+          this.loading = false;
+          this.cdr.detectChanges();
+        },
+        error: (e) => {
+          this.loading = false;
+          console.error('Load Users Error:', e);
+          if (e.status === 503 || e.status === 500) {
+            this.users = [];
+            const msg = e.error?.message || 'Backend connection failed. Please check server logs.';
+            this.showAlert('Configuration Error', msg);
+          } else {
+            this.showAlert('Error', e.error?.message || 'Failed to load users.');
+          }
+          this.cdr.detectChanges(); // Force UI update
         }
       });
-
-      const command = new ListUsersCommand({
-        UserPoolId: environment.cognito.userPoolId,
-        Limit: 60
-      });
-
-      const response = await client.send(command);
-
-      this.users = response.Users?.map(u => {
-        const email = u.Attributes?.find(a => a.Name === 'email')?.Value || 'Unknown';
-        const sub = u.Attributes?.find(a => a.Name === 'sub')?.Value || u.Username;
-        const isSuperAdmin = email === 'chappabharath1999@gmail.com' || (u.Username && u.Username.includes('chappa'));
-
-        return {
-          id: sub,
-          email: email,
-          role: isSuperAdmin ? 'SUPER_ADMIN' : 'USER',
-          status: u.UserStatus,
-          enabled: u.Enabled
-        };
-      }) || [];
-
-      this.loading = false;
-      this.cdr.detectChanges();
-
-    } catch (e: any) {
-      this.loading = false;
-      console.error('Cognito Frontend Error:', e);
-      this.showAlert('Access Denied', `Could not list users. Ensure your Identity Pool Role has 'cognito-idp:ListUsers' permission.\nDetails: ${e.message}`);
-    }
+    } catch (e) { this.loading = false; }
   }
 
   // MODAL LOGIC
@@ -1591,35 +1661,22 @@ export class DashboardComponent implements OnInit {
       async () => {
         try {
           const session = await fetchAuthSession();
-          const credentials = session.credentials;
-          if (!credentials) throw new Error('No AWS Credentials found in session. Updates require Identity Pool.');
-
-          const client = new CognitoIdentityProviderClient({
-            region: 'us-east-1',
-            credentials: {
-              accessKeyId: credentials.accessKeyId,
-              secretAccessKey: credentials.secretAccessKey,
-              sessionToken: credentials.sessionToken
+          const token = session.tokens?.accessToken?.toString();
+          const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
+          this.http.put(`http://localhost:3000/users/${user.id}/role`, { role: newRole }, { headers }).subscribe({
+            next: () => {
+              user.role = newRole;
+              this.showAlert('Success', 'User role updated successfully.');
+            },
+            error: (e) => {
+              console.error(e);
+              const msg = e.error?.message || 'Failed to update role.';
+              this.showAlert('Error', msg);
+              this.loadUsers();
+              this.cdr.detectChanges();
             }
           });
-
-          const groupName = newRole === 'SUPER_ADMIN' ? 'Admin' : 'Users';
-          const command = new AdminAddUserToGroupCommand({
-            UserPoolId: environment.cognito.userPoolId,
-            Username: user.id,
-            GroupName: groupName
-          });
-
-          await client.send(command);
-
-          user.role = newRole;
-          this.showAlert('Success', 'User role updated via Cognito.');
-
-        } catch (e: any) {
-          console.error(e);
-          this.showAlert('Error', `Update Failed: ${e.message}`);
-          this.loadUsers();
-        }
+        } catch (e) { }
       },
       () => { this.loadUsers(); },
       'Yes, Change Role'
@@ -1636,27 +1693,18 @@ export class DashboardComponent implements OnInit {
           const token = session.tokens?.accessToken?.toString();
           const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
 
-          const credentials = session.credentials;
-          if (!credentials) throw new Error('No Credentials');
-
-          const client = new CognitoIdentityProviderClient({
-            region: 'us-east-1',
-            credentials: {
-              accessKeyId: credentials.accessKeyId,
-              secretAccessKey: credentials.secretAccessKey,
-              sessionToken: credentials.sessionToken
+          this.http.delete(`http://localhost:3000/users/${user.id}`, { headers }).subscribe({
+            next: () => {
+              this.users = this.users.filter(u => u.id !== user.id);
+              this.showAlert('Deleted', `${user.email} has been removed from the system.`);
+            },
+            error: (e) => {
+              console.error('Delete Error:', e);
+              const msg = e.error?.message || 'Failed to delete user.';
+              this.showAlert('Error', msg);
+              this.cdr.detectChanges();
             }
           });
-
-          const command = new AdminDeleteUserCommand({
-            UserPoolId: environment.cognito.userPoolId,
-            Username: user.id
-          });
-
-          await client.send(command);
-
-          this.users = this.users.filter(u => u.id !== user.id);
-          this.showAlert('Deleted', `${user.email} has been removed from Cognito.`);
         } catch (e) {
           console.error('Auth Error:', e);
         }

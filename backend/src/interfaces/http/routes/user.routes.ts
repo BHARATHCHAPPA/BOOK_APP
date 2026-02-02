@@ -31,12 +31,23 @@ export async function userRoutes(fastify: FastifyInstance) {
 
     // ADMIN ROUTES
 
+    // ADMIN ROUTES
+
     // GET /users - List all users (Directly from Cognito)
     fastify.get('/', async (req, reply) => {
         const user = (req as any).user;
 
         if (user.role !== UserRole.SUPER_ADMIN) {
             return reply.status(403).send({ error: 'Access Denied: Admins Only' });
+        }
+
+        // 1. Check for AWS Credentials explicitly
+        if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
+            req.log.warn('AWS Credentials missing in process.env');
+            return reply.status(503).send({
+                error: 'Server Configuration Error',
+                message: 'Backend is missing AWS_ACCESS_KEY_ID or AWS_SECRET_ACCESS_KEY. Please check .env file.'
+            });
         }
 
         try {
@@ -70,9 +81,17 @@ export async function userRoutes(fastify: FastifyInstance) {
 
         } catch (error: any) {
             req.log.error({ err: error }, 'Cognito ListUsers Failed');
+
+            // Helpful error mapping
+            let msg = 'Backend Connection Error to AWS Cognito.';
+            if (error.name === 'UnrecognizedClientException' || error.name === 'InvalidSignatureException') {
+                msg = 'Invalid AWS Credentials. Please check Access Key and Secret.';
+            }
+
             return reply.status(503).send({
                 error: 'Backend Connection Error',
-                message: 'The backend is not connected to AWS Cognito. Please check server credentials.'
+                message: msg,
+                details: error.message
             });
         }
     });
@@ -84,6 +103,13 @@ export async function userRoutes(fastify: FastifyInstance) {
         const body = req.body as { role: string };
 
         if (user.role !== UserRole.SUPER_ADMIN) return reply.status(403).send({ error: 'Access Denied' });
+
+        if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
+            return reply.status(503).send({
+                error: 'Server Configuration Error',
+                message: 'Backend is missing AWS_ACCESS_KEY_ID or AWS_SECRET_ACCESS_KEY.'
+            });
+        }
 
         const targetGroup = body.role === 'SUPER_ADMIN' ? 'Admin' : 'Users';
 
@@ -100,7 +126,7 @@ export async function userRoutes(fastify: FastifyInstance) {
             req.log.error(error);
             return reply.status(503).send({
                 error: 'Backend Connection Error',
-                message: 'Failed to update role. Backend is not connected to AWS Cognito.'
+                message: error.message || 'Failed to connect to Cognito'
             });
         }
     });
@@ -114,6 +140,13 @@ export async function userRoutes(fastify: FastifyInstance) {
 
         if (id === user.id) return reply.status(400).send({ error: 'Cannot delete yourself' });
 
+        if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
+            return reply.status(503).send({
+                error: 'Server Configuration Error',
+                message: 'Backend is missing AWS_ACCESS_KEY_ID or AWS_SECRET_ACCESS_KEY.'
+            });
+        }
+
         try {
             const command = new AdminDeleteUserCommand({
                 UserPoolId: config.COGNITO_USER_POOL_ID,
@@ -125,7 +158,7 @@ export async function userRoutes(fastify: FastifyInstance) {
             req.log.error(error);
             return reply.status(503).send({
                 error: 'Backend Connection Error',
-                message: 'Failed to delete user. Backend is not connected to AWS Cognito.'
+                message: error.message || 'Failed to connect to Cognito'
             });
         }
     });
