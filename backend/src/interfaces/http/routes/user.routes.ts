@@ -1,110 +1,132 @@
 import { FastifyInstance } from 'fastify';
-import { z } from 'zod';
-import { DynamoUserRepository } from '../../../infrastructure/database/DynamoUserRepository';
+import { CognitoIdentityProviderClient, ListUsersCommand, AdminAddUserToGroupCommand, AdminRemoveUserFromGroupCommand, AdminDeleteUserCommand } from '@aws-sdk/client-cognito-identity-provider';
 import { authMiddleware } from '../../../infrastructure/auth/authMiddleware';
 import { UserRole } from '../../../domain/auth/permissions';
+import { config } from '../../../config/env';
 
-const userRepo = new DynamoUserRepository();
+const cognitoClient = new CognitoIdentityProviderClient({ region: config.AWS_REGION });
 
 export async function userRoutes(fastify: FastifyInstance) {
 
     // All user routes require authentication
     fastify.addHook('preHandler', authMiddleware);
 
-    // GET /users/me - Get current user profile
+    // GET /users/me - Get current user profile (Pure Token Reflection)
     fastify.get('/me', async (req, reply) => {
         const user = (req as any).user;
         if (!user || !user.id) {
             return reply.status(401).send({ message: 'User identity missing' });
         }
 
-        try {
-            let profile = await userRepo.findById(user.id);
+        const profile = {
+            id: user.id || user.sub,
+            email: user.email,
+            role: user.role || 'USER',
+            credits: 50,
+            _source: 'Cognito Token'
+        };
 
-            if (!profile) {
-                const newUser = {
-                    id: user.id,
-                    email: user.email,
-                    role: user.email === 'jovifem243@ixunbo.com' || user.email === 'CHAPPABHARATH1999@GMAIL.COM' ? 'SUPER_ADMIN' : 'USER',
-                    credits: 50
-                };
-                await userRepo.create(newUser as any);
-                profile = newUser as any;
-            }
-
-            return reply.send(profile);
-        } catch (error: any) {
-            if (error.name === 'CredentialsProviderError') {
-                return reply.send({
-                    id: user.id,
-                    email: user.email,
-                    role: user.email === 'jovifem243@ixunbo.com' || user.email === 'CHAPPABHARATH1999@GMAIL.COM' ? 'SUPER_ADMIN' : 'USER',
-                    credits: 50,
-                    _mock: true,
-                    _message: 'Using mock data - AWS credentials not configured'
-                });
-            }
-            throw error;
-        }
+        return reply.send(profile);
     });
 
     // ADMIN ROUTES
 
-    // GET /users - List all users (Admin Only)
+    // GET /users - List all users (Directly from Cognito)
     fastify.get('/', async (req, reply) => {
         const user = (req as any).user;
-        // Verify Admin Role (Quick Check)
-        const currentUser = await userRepo.findById(user.id);
-        if (currentUser?.role !== UserRole.SUPER_ADMIN) {
+
+        if (user.role !== UserRole.SUPER_ADMIN) {
             return reply.status(403).send({ error: 'Access Denied: Admins Only' });
         }
 
-        return await userRepo.findAll();
+        try {
+            const command = new ListUsersCommand({
+                UserPoolId: config.COGNITO_USER_POOL_ID,
+                Limit: 60
+            });
+            const response = await cognitoClient.send(command);
+
+            // Map Cognito Users to App Format
+            const users = response.Users?.map(u => {
+                const emailAttr = u.Attributes?.find(a => a.Name === 'email');
+                const email = emailAttr ? emailAttr.Value : 'Unknown';
+                const subAttr = u.Attributes?.find(a => a.Name === 'sub');
+                const id = subAttr ? subAttr.Value : u.Username;
+
+                // Naive Role Detection (We can't see groups in ListUsers easily)
+                const isSuperAdmin = email === 'chappabharath1999@gmail.com' || (u.Username && u.Username.includes('chappa'));
+
+                return {
+                    id: id,
+                    email: email,
+                    role: isSuperAdmin ? 'SUPER_ADMIN' : 'USER',
+                    status: u.UserStatus,
+                    enabled: u.Enabled,
+                    credits: 0 // Not stored in Cognito
+                };
+            }) || [];
+
+            return users;
+
+        } catch (error: any) {
+            req.log.error({ err: error }, 'Cognito ListUsers Failed');
+            return reply.status(503).send({
+                error: 'Backend Connection Error',
+                message: 'The backend is not connected to AWS Cognito. Please check server credentials.'
+            });
+        }
     });
 
-    // PUT /users/:id/role - Update User Role (Admin Only)
+    // PUT /users/:id/role - Update User Role (Cognito Group Update)
     fastify.put('/:id/role', async (req, reply) => {
         const user = (req as any).user;
         const { id } = req.params as { id: string };
         const body = req.body as { role: string };
 
-        // Verify Admin Role
-        const currentUser = await userRepo.findById(user.id);
-        if (currentUser?.role !== UserRole.SUPER_ADMIN) {
-            return reply.status(403).send({ error: 'Access Denied: Admins Only' });
-        }
+        if (user.role !== UserRole.SUPER_ADMIN) return reply.status(403).send({ error: 'Access Denied' });
 
-        // Validate Role (Simple check)
-        if (!Object.values(UserRole).includes(body.role as UserRole)) {
-            return reply.status(400).send({ error: 'Invalid User Role' });
-        }
+        const targetGroup = body.role === 'SUPER_ADMIN' ? 'Admin' : 'Users';
 
-        await userRepo.updateRole(id, body.role);
-        return { success: true, message: `User ${id} role updated to ${body.role}` };
+        try {
+            const command = new AdminAddUserToGroupCommand({
+                UserPoolId: config.COGNITO_USER_POOL_ID,
+                Username: id,
+                GroupName: targetGroup
+            });
+            await cognitoClient.send(command);
+
+            return { success: true, message: `User added to ${targetGroup} group in Cognito` };
+        } catch (error: any) {
+            req.log.error(error);
+            return reply.status(503).send({
+                error: 'Backend Connection Error',
+                message: 'Failed to update role. Backend is not connected to AWS Cognito.'
+            });
+        }
     });
 
-    // DELETE /users/:id - Delete User (Admin Only)
+    // DELETE /users/:id - Delete User (Cognito AdminDeleteUser)
     fastify.delete('/:id', async (req, reply) => {
         const user = (req as any).user;
         const { id } = req.params as { id: string };
 
-        // Verify Admin
-        const currentUser = await userRepo.findById(user.id);
-        if (currentUser?.role !== UserRole.SUPER_ADMIN) {
-            return reply.status(403).send({ error: 'Access Denied: Admins Only' });
-        }
+        if (user.role !== UserRole.SUPER_ADMIN) return reply.status(403).send({ error: 'Access Denied' });
 
-        const targetUser = await userRepo.findById(id);
-        if (!targetUser) {
-            return reply.status(404).send({ error: 'User not found' });
-        }
+        if (id === user.id) return reply.status(400).send({ error: 'Cannot delete yourself' });
 
-        // STRICTLY PREVENT DELETION OF SUPER ADMINS
-        if (targetUser.role === UserRole.SUPER_ADMIN || targetUser.email === 'chappabharath1999@gmail.com') {
-            return reply.status(403).send({ error: 'Operation Denied: Cannot delete a Super Admin account.' });
+        try {
+            const command = new AdminDeleteUserCommand({
+                UserPoolId: config.COGNITO_USER_POOL_ID,
+                Username: id
+            });
+            await cognitoClient.send(command);
+            return { success: true, message: 'User deleted from Cognito' };
+        } catch (error: any) {
+            req.log.error(error);
+            return reply.status(503).send({
+                error: 'Backend Connection Error',
+                message: 'Failed to delete user. Backend is not connected to AWS Cognito.'
+            });
         }
-
-        await (userRepo as any).delete(id);
-        return { success: true, message: `User ${id} deleted` };
     });
 }

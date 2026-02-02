@@ -1,7 +1,7 @@
 import { Component, NgZone, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { signIn, signUp, confirmSignUp, resetPassword, confirmResetPassword } from 'aws-amplify/auth';
+import { signIn, signUp, confirmSignUp, resetPassword, confirmResetPassword, confirmSignIn } from 'aws-amplify/auth';
 import { Router } from '@angular/router';
 
 @Component({
@@ -14,10 +14,11 @@ import { Router } from '@angular/router';
 export class LoginComponent {
   email = '';
   password = '';
+  newPassword = ''; // For Force Change Password
   otp = '';
 
   mode: 'LOGIN' | 'SIGNUP' | 'FORGOT' = 'LOGIN';
-  step: 'CREDENTIALS' | 'OTP' = 'CREDENTIALS';
+  step: 'CREDENTIALS' | 'OTP' | 'NEW_PASSWORD' = 'CREDENTIALS';
 
   isLoading = false;
   errorMessage = '';
@@ -130,8 +131,49 @@ export class LoginComponent {
         import('aws-amplify/auth').then(auth =>
           auth.resendSignUpCode({ username: this.email })
         );
+      } else if (result.nextStep?.signInStep === 'CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED') {
+        this.step = 'NEW_PASSWORD';
+        this.showAlert('Update Password', 'Please set a permanent password for your account.', 'SUCCESS');
       }
     });
+  }
+
+  async handleForceNewPassword() {
+    if (!this.newPassword) {
+      this.showAlert('Missing Password', 'Please enter your new password.', 'ERROR');
+      return;
+    }
+
+    // Strong password check for new password
+    const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\^$*.[\]{}()?"!@#%&/\\,><':;|_~`+=-]).{8,}$/;
+    if (!strongPasswordRegex.test(this.newPassword)) {
+      this.showAlert(
+        'Weak Password',
+        'Password must meet all requirements:\n• At least 8 characters\n• 1 Uppercase Letter\n• 1 Lowercase Letter\n• 1 Number\n• 1 Special Character',
+        'ERROR'
+      );
+      return;
+    }
+
+    this.isLoading = true;
+    try {
+      const result = await confirmSignIn({
+        challengeResponse: this.newPassword
+      });
+
+      this.ngZone.run(() => {
+        if (result.isSignedIn) {
+          this.router.navigate(['/dashboard']);
+        }
+      });
+    } catch (error: any) {
+      this.ngZone.run(() => {
+        this.handleAuthError(error);
+      });
+    } finally {
+      this.isLoading = false;
+      this.cdr.detectChanges();
+    }
   }
 
   async handleSignUp() {
@@ -142,6 +184,9 @@ export class LoginComponent {
         password: this.password,
         options: { userAttributes: { email: this.email } }
       });
+      // Note: We cannot assign groups client-side during sign-up. 
+      // The backend Post-Confirmation trigger or default role logic handles this.
+
       this.step = 'OTP';
       this.showAlert('Account Created', 'Please check your email for the verification code.', 'SUCCESS');
     } catch (error: any) {
@@ -155,7 +200,6 @@ export class LoginComponent {
           return;
         } catch (resendError: any) {
           console.error('Resend failed:', resendError);
-          // Fall through to re-throw original error if resend fails
         }
       }
       throw error;

@@ -32,10 +32,7 @@ export class DynamoUserRepository implements IUserRepository {
     }
 
     async findAll(): Promise<IUser[]> {
-        // 1. Return Mock Users
-        const mockList = Object.values(MOCK_USERS);
-
-        // 2. Scan DynamoDB (Admin MVP only)
+        // 1. Scan DynamoDB
         const params = {
             TableName: this.tableName,
             FilterExpression: 'Entity = :entity',
@@ -48,13 +45,20 @@ export class DynamoUserRepository implements IUserRepository {
             const result = await docClient.send(new ScanCommand(params));
             const dbList = result.Items as IUser[];
 
+            // Merge with Mock (DB content overrides Mock ID collisions)
             const map = new Map<string, IUser>();
-            mockList.forEach(u => map.set(u.id, u));
-            dbList?.forEach(u => map.set(u.id, u));
+            Object.values(MOCK_USERS).forEach(u => map.set(u.id, u));
+
+            dbList?.forEach(u => {
+                // Ensure default role if missing (Dynamic fallbacks)
+                if (!u.role) u.role = 'USER';
+                map.set(u.id, u);
+            });
 
             return Array.from(map.values());
         } catch (e) {
-            return mockList;
+            console.error('Scan failed, returning mocks', e);
+            return Object.values(MOCK_USERS);
         }
     }
 

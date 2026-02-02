@@ -4,6 +4,8 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { fetchAuthSession, signOut } from 'aws-amplify/auth';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { CognitoIdentityProviderClient, ListUsersCommand, AdminAddUserToGroupCommand, AdminDeleteUserCommand } from '@aws-sdk/client-cognito-identity-provider';
+import { environment } from '../../environments/environment';
 
 // --- MOCK DATA FOR BRAVESOUP PULSE ---
 const MOCK_PULSE_DATA = {
@@ -150,7 +152,26 @@ const MOCK_NOTIFICATIONS = [
     project: 'Project',
     time: '1 hr ago',
     unread: false
+  },
+  {
+    id: 5,
+    user: 'System',
+    avatar: 'assets/system.png',
+    msg: 'Welcome to BraveSoup Pulse',
+    project: 'Onboarding',
+    time: 'Just now',
+    unread: true
   }
+];
+
+const MOCK_PAYMENTS = [
+  { id: 'PAY-8921', user: 'alice.johnson@example.com', amount: '$49.00', status: 'Success', date: 'Oct 24, 2023', method: 'Visa •••• 4242', type: 'Subscription' },
+  { id: 'PAY-8922', user: 'bob.smith@example.com', amount: '$29.00', status: 'Failed', date: 'Oct 23, 2023', method: 'Mastercard •••• 8821', type: 'One-time' },
+  { id: 'PAY-8923', user: 'charlie.davis@example.com', amount: '$99.00', status: 'Success', date: 'Oct 22, 2023', method: 'PayPal', type: 'Credits' },
+  { id: 'PAY-8924', user: 'diana.evans@example.com', amount: '$29.00', status: 'Refunded', date: 'Oct 21, 2023', method: 'Visa •••• 1234', type: 'One-time' },
+  { id: 'PAY-8925', user: 'ethan.harris@example.com', amount: '$149.00', status: 'Success', date: 'Oct 20, 2023', method: 'Amex •••• 0001', type: 'Annual Plan' },
+  { id: 'PAY-8926', user: 'fiona.clark@example.com', amount: '$15.00', status: 'Success', date: 'Oct 19, 2023', method: 'Visa •••• 9999', type: 'Credit Top-up' },
+  { id: 'PAY-8927', user: 'george.baker@example.com', amount: '$29.00', status: 'Cancelled', date: 'Oct 18, 2023', method: 'Visa •••• 4242', type: 'One-time' }
 ];
 
 @Component({
@@ -180,6 +201,10 @@ const MOCK_NOTIFICATIONS = [
                  </a>
                  <a (click)="view = 'ALERTS'" [class.active]="view === 'ALERTS'" class="nav-item">
                      <span class="icon">🔔</span> Alerts <span class="badge-count" *ngIf="pulse.alerts.length">{{pulse.alerts.length}}</span>
+                 </a>
+                 <div class="nav-label mt-4">Finance</div>
+                 <a (click)="view = 'PAYMENTS'" [class.active]="view === 'PAYMENTS'" class="nav-item">
+                     <span class="icon">💳</span> Payments
                  </a>
              </ng-container>
 
@@ -283,7 +308,47 @@ const MOCK_NOTIFICATIONS = [
               </div>
           </header>
 
-          <div class="content-scroll">
+              <div class="content-scroll">
+
+              <!-- VIEW: PAYMENTS (Stripe Data) -->
+              <div *ngIf="view === 'PAYMENTS' && isInternal" class="dashboard-grid fade-in">
+                  <div class="section-container full-width">
+                      <div class="section-header">
+                          <h2>Payment History</h2>
+                          <button class="btn-primary" style="font-size:0.8rem;">Export CSV</button>
+                      </div>
+                      <div class="card full-width" style="overflow-x:auto;">
+                          <table class="data-table">
+                              <thead>
+                                  <tr>
+                                      <th>Transaction ID</th>
+                                      <th>User</th>
+                                      <th>Date</th>
+                                      <th>Amount</th>
+                                      <th>Type</th>
+                                      <th>Status</th>
+                                      <th>Method</th>
+                                  </tr>
+                              </thead>
+                              <tbody>
+                                  <tr *ngFor="let p of payments">
+                                      <td class="mono">{{p.id}}</td>
+                                      <td>{{p.user}}</td>
+                                      <td>{{p.date}}</td>
+                                      <td style="font-weight:600;">{{p.amount}}</td>
+                                      <td><span class="badge-gray">{{p.type}}</span></td>
+                                      <td>
+                                          <span class="status-badge success" *ngIf="p.status === 'Success'">Success</span>
+                                          <span class="status-badge error" *ngIf="p.status === 'Failed' || p.status === 'Cancelled'">{{p.status}}</span>
+                                          <span class="status-badge warning" *ngIf="p.status === 'Refunded'">Refunded</span>
+                                      </td>
+                                      <td style="color:#6b7280; font-size:0.9rem;">{{p.method}}</td>
+                                  </tr>
+                              </tbody>
+                          </table>
+                      </div>
+                  </div>
+              </div>
 
               <!-- ========================================== -->
               <!-- VIEW: EXECUTIVE PULSE (The "Mega Dashboard") -->
@@ -1320,13 +1385,14 @@ const MOCK_NOTIFICATIONS = [
   }
 })
 export class DashboardComponent implements OnInit {
-  view: 'PULSE' | 'USERS' | 'CUSTOMERS' | 'CUSTOMER_DETAIL' | 'BOOKS' | 'PROFILE' | 'ALERTS' = 'BOOKS';
+  view: 'PULSE' | 'USERS' | 'CUSTOMERS' | 'CUSTOMER_DETAIL' | 'BOOKS' | 'PROFILE' | 'ALERTS' | 'PAYMENTS' = 'BOOKS';
   isInternal = false;
   role = 'Loading...';
   userEmail = '';
   userId = '';
   pulse = MOCK_PULSE_DATA; // Start with mock, then we can bind real data later
   mockCustomers = MOCK_CUSTOMERS;
+  payments = MOCK_PAYMENTS;
   notifications = MOCK_NOTIFICATIONS;
   selectedCustomer: any = null;
   timeRange: '7d' | '30d' | '90d' = '30d'; /* Default to 30d */
@@ -1356,6 +1422,7 @@ export class DashboardComponent implements OnInit {
     switch (this.view) {
       case 'PULSE': return 'Dashboard';
       case 'USERS': return 'User Management';
+      case 'PAYMENTS': return 'Payments & Billing';
       case 'CUSTOMERS': return 'Customer Directory';
       case 'CUSTOMER_DETAIL': return 'Customer Profile';
       case 'ALERTS': return 'Priority Actions';
@@ -1374,10 +1441,31 @@ export class DashboardComponent implements OnInit {
       }
       this.userEmail = session.tokens.idToken?.payload['email'] as string;
       this.userId = session.userSub || '';
+
+      // DYNAMIC DASHBOARD LOGIC BASED ON COGNITO GROUPS
+      const groups = (session.tokens.accessToken?.payload['cognito:groups'] as string[]) || [];
+      console.log('User Groups:', groups);
+
+      if (groups.includes('Admin')) {
+        this.role = 'Admin';
+        this.isInternal = true; // Treats Admin as Internal
+        this.view = 'PULSE';    // Admin sees the Pulse Dashboard
+      } else {
+        this.role = 'User';
+        this.isInternal = false; // Regular users are external
+        this.view = 'BOOKS';     // Users see their Library
+      }
+      this.cdr.detectChanges();
+
+      // REQUIRED: Call backend to ensure User Record is created/synced in DynamoDB
       this.fetchProfile();
-    } catch (e) { this.router.navigate(['/login']); }
+    } catch (e) {
+      console.error('Dashboard Init Error:', e);
+      this.router.navigate(['/login']);
+    }
   }
 
+  // Legacy profile fetch - kept for reference if needed later
   async fetchProfile() {
     try {
       const session = await fetchAuthSession();
@@ -1386,16 +1474,16 @@ export class DashboardComponent implements OnInit {
 
       this.http.get<any>('http://localhost:3000/users/me', { headers }).subscribe({
         next: (data) => {
-          this.role = data.role;
-          this.isInternal = ['SUPER_ADMIN', 'FINANCE_ADMIN', 'OPS_ADMIN', 'DEVELOPER', 'SUPPORT', 'MARKETING'].includes(this.role);
-
-          // If internal, default to Pulse. If user, default to Books.
-          if (this.isInternal) this.view = 'PULSE'; else this.view = 'BOOKS';
-          this.cdr.detectChanges();
+          // Only override if not already determined by Cognito Group
+          if (!this.role || this.role === 'Loading...') {
+            this.role = data.role;
+            this.isInternal = ['Admin', 'SUPER_ADMIN', 'FINANCE_ADMIN', 'OPS_ADMIN', 'DEVELOPER', 'SUPPORT', 'MARKETING'].includes(this.role);
+            if (this.isInternal) this.view = 'PULSE'; else this.view = 'BOOKS';
+            this.cdr.detectChanges();
+          }
         },
         error: () => {
-          this.role = 'USER';
-          this.view = 'BOOKS';
+          // Fallback handled in ngOnInit
         }
       });
     } catch (e) { }
@@ -1411,14 +1499,53 @@ export class DashboardComponent implements OnInit {
     this.loading = true;
     try {
       const session = await fetchAuthSession();
-      const token = session.tokens?.accessToken?.toString();
-      const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
+      // Try to get credentials (requires Identity Pool)
+      const credentials = session.credentials;
 
-      this.http.get<any[]>('http://localhost:3000/users', { headers }).subscribe({
-        next: (data) => { this.users = data; this.loading = false; this.cdr.detectChanges(); },
-        error: () => { this.loading = false; }
+      if (!credentials) {
+        this.loading = false;
+        this.showAlert('Configuration Error', 'No AWS Credentials found in session. To manage users from Frontend without backend, an AWS Identity Pool with Admin permissions is required.');
+        return;
+      }
+
+      const client = new CognitoIdentityProviderClient({
+        region: 'us-east-1',
+        credentials: {
+          accessKeyId: credentials.accessKeyId,
+          secretAccessKey: credentials.secretAccessKey,
+          sessionToken: credentials.sessionToken
+        }
       });
-    } catch (e) { this.loading = false; }
+
+      const command = new ListUsersCommand({
+        UserPoolId: environment.cognito.userPoolId,
+        Limit: 60
+      });
+
+      const response = await client.send(command);
+
+      this.users = response.Users?.map(u => {
+        const email = u.Attributes?.find(a => a.Name === 'email')?.Value || 'Unknown';
+        const sub = u.Attributes?.find(a => a.Name === 'sub')?.Value || u.Username;
+        const isSuperAdmin = email === 'chappabharath1999@gmail.com' || (u.Username && u.Username.includes('chappa'));
+
+        return {
+          id: sub,
+          email: email,
+          role: isSuperAdmin ? 'SUPER_ADMIN' : 'USER',
+          status: u.UserStatus,
+          enabled: u.Enabled
+        };
+      }) || [];
+
+      this.loading = false;
+      this.cdr.detectChanges();
+
+    } catch (e: any) {
+      this.loading = false;
+      console.error('Cognito Frontend Error:', e);
+      this.showAlert('Access Denied', `Could not list users. Ensure your Identity Pool Role has 'cognito-idp:ListUsers' permission.\nDetails: ${e.message}`);
+    }
   }
 
   // MODAL LOGIC
@@ -1452,10 +1579,9 @@ export class DashboardComponent implements OnInit {
 
 
   async updateRole(user: any, newRole: string) {
-    // Constraint: Super Admin role cannot be changed to ANY other role
     if (user.role === 'SUPER_ADMIN') {
       this.showAlert('Action Denied', 'Super Admin role cannot be changed.');
-      this.loadUsers(); // Revert UI
+      this.loadUsers();
       return;
     }
 
@@ -1463,28 +1589,39 @@ export class DashboardComponent implements OnInit {
       'Change User Role?',
       `Are you sure you want to change ${user.email}'s role to ${newRole}?`,
       async () => {
-        // ACTION
         try {
           const session = await fetchAuthSession();
-          const token = session.tokens?.accessToken?.toString();
-          const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
-          this.http.put(`http://localhost:3000/users/${user.id}/role`, { role: newRole }, { headers }).subscribe({
-            next: () => {
-              user.role = newRole;
-              this.showAlert('Success', 'User role updated successfully.');
-            },
-            error: (e) => {
-              console.error(e);
-              this.showAlert('Error', 'Failed to update role.');
-              this.loadUsers();
+          const credentials = session.credentials;
+          if (!credentials) throw new Error('No AWS Credentials found in session. Updates require Identity Pool.');
+
+          const client = new CognitoIdentityProviderClient({
+            region: 'us-east-1',
+            credentials: {
+              accessKeyId: credentials.accessKeyId,
+              secretAccessKey: credentials.secretAccessKey,
+              sessionToken: credentials.sessionToken
             }
           });
-        } catch (e) { }
+
+          const groupName = newRole === 'SUPER_ADMIN' ? 'Admin' : 'Users';
+          const command = new AdminAddUserToGroupCommand({
+            UserPoolId: environment.cognito.userPoolId,
+            Username: user.id,
+            GroupName: groupName
+          });
+
+          await client.send(command);
+
+          user.role = newRole;
+          this.showAlert('Success', 'User role updated via Cognito.');
+
+        } catch (e: any) {
+          console.error(e);
+          this.showAlert('Error', `Update Failed: ${e.message}`);
+          this.loadUsers();
+        }
       },
-      () => {
-        // CANCEL/REVERT
-        this.loadUsers();
-      },
+      () => { this.loadUsers(); },
       'Yes, Change Role'
     );
   }
@@ -1493,10 +1630,36 @@ export class DashboardComponent implements OnInit {
     this.showConfirm(
       'Delete User?',
       `Are you sure you want to permanently delete ${user.email}? This action cannot be undone.`,
-      () => {
-        this.users = this.users.filter(u => u.id !== user.id);
-        this.showAlert('Deleted', `${user.email} has been removed.`);
-        // TODO: Call backend delete
+      async () => {
+        try {
+          const session = await fetchAuthSession();
+          const token = session.tokens?.accessToken?.toString();
+          const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
+
+          const credentials = session.credentials;
+          if (!credentials) throw new Error('No Credentials');
+
+          const client = new CognitoIdentityProviderClient({
+            region: 'us-east-1',
+            credentials: {
+              accessKeyId: credentials.accessKeyId,
+              secretAccessKey: credentials.secretAccessKey,
+              sessionToken: credentials.sessionToken
+            }
+          });
+
+          const command = new AdminDeleteUserCommand({
+            UserPoolId: environment.cognito.userPoolId,
+            Username: user.id
+          });
+
+          await client.send(command);
+
+          this.users = this.users.filter(u => u.id !== user.id);
+          this.showAlert('Deleted', `${user.email} has been removed from Cognito.`);
+        } catch (e) {
+          console.error('Auth Error:', e);
+        }
       },
       undefined,
       'Delete User'
